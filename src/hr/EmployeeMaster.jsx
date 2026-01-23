@@ -13,8 +13,7 @@ import {
   X,
 } from "lucide-react";
 
-/* INITIAL EMPLOYEE DATA
-    */
+/* INITIAL EMPLOYEE DATA */
 const initialEmployees = [
   {
     initials: "RK",
@@ -73,9 +72,7 @@ const initialEmployees = [
   },
 ];
 
-/* ============================================================
-   STATUS COLORS
-   ============================================================ */
+/*  STATUS COLORS */
 const statusStyles = {
   Active: "bg-green-100 text-green-700",
   "On Probation": "bg-yellow-100 text-yellow-700",
@@ -83,9 +80,7 @@ const statusStyles = {
   Inactive: "bg-gray-200 text-gray-700",
 };
 
-/* ============================================================
-   STAT CARD COMPONENT
-   ============================================================ */
+/*  STAT CARD COMPONENT */
 const StatCard = ({ title, value, subtitle, icon, color }) => {
   const colorMap = {
     blue: "text-blue-600",
@@ -106,9 +101,7 @@ const StatCard = ({ title, value, subtitle, icon, color }) => {
   );
 };
 
-/* ============================================================
-   VIEW EMPLOYEE MODAL
-   ============================================================ */
+/*    VIEW EMPLOYEE MODAL   */
 const ViewEmployeeModal = ({ employee, onClose }) => {
   if (!employee) return null;
 
@@ -134,9 +127,7 @@ const ViewEmployeeModal = ({ employee, onClose }) => {
   );
 };
 
-/* ============================================================
-   ADD + EDIT EMPLOYEE MODAL (FULL 6 STEPS)
-   ============================================================ */
+/*    ADD + EDIT EMPLOYEE MODAL (FULL 6 STEPS)  */
 const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
   const isEditing = !!editEmployee;
 
@@ -217,9 +208,7 @@ const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
           ))}
         </div>
 
-        {/* ============================================================
-            STEP 1 – BASIC INFO
-           ============================================================ */}
+        {/*STEP 1 – BASIC INFO*/}
         {step === 1 && (
           <div className="bg-gray-50 p-6 rounded-xl">
             <h3 className="font-semibold mb-4">Basic Information</h3>
@@ -270,9 +259,7 @@ const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
           </div>
         )}
 
-        {/* ============================================================
-            STEP 2 – EMPLOYMENT
-           ============================================================ */}
+        {/* STEP 2 – EMPLOYMENT*/}
         {step === 2 && (
           <div className="bg-gray-50 p-6 rounded-xl">
             <h3 className="font-semibold mb-6">Employment Details</h3>
@@ -349,9 +336,7 @@ const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
           </div>
         )}
 
-        {/* ============================================================
-            STEP 3 – DOCUMENT UPLOAD
-           ============================================================ */}
+        {/* STEP 3 – DOCUMENT UPLOAD   */}
         {step === 3 && (
           <div className="bg-gray-50 p-6 rounded-xl">
             <h3 className="font-semibold text-lg mb-4">Document Upload</h3>
@@ -431,9 +416,7 @@ const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
           </div>
         )}
 
-        {/* ============================================================
-            STEP 4 – BANK DETAILS
-           ============================================================ */}
+        {/* STEP 4 – BANK DETAILS*/}
         {step === 4 && (
           <div className="bg-gray-50 p-6 rounded-xl">
             <h3 className="font-semibold text-lg mb-6">Bank Details</h3>
@@ -496,9 +479,7 @@ const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
           </div>
         )}
 
-        {/* ============================================================
-            STEP 5 – ADDITIONAL DOCUMENTS
-           ============================================================ */}
+        {/* STEP 5 – ADDITIONAL DOCUMENTS*/}
         {step === 5 && (
           <div className="bg-gray-50 p-6 rounded-xl">
             <h3 className="font-semibold text-lg mb-6">
@@ -559,9 +540,7 @@ const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
           </div>
         )}
 
-        {/* ============================================================
-            STEP 6 – REVIEW & SUBMIT
-           ============================================================ */}
+        {/*STEP 6 – REVIEW & SUBMIT*/}
         {step === 6 && (
           <div className="bg-gray-50 p-8 rounded-xl">
             <h3 className="font-semibold text-lg mb-6">Review & Confirm</h3>
@@ -634,9 +613,7 @@ const AddEmployeeModal = ({ onClose, onSubmit, editEmployee }) => {
   );
 };
 
-/* ============================================================
-   MAIN EMPLOYEE MASTER PAGE
-   ============================================================ */
+/*MAIN EMPLOYEE MASTER PAGE*/
 const EmployeeMaster = () => {
   const [employees, setEmployees] = useState(initialEmployees);
   const [showModal, setShowModal] = useState(false);

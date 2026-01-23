@@ -18,12 +18,14 @@ import {
 import HRDashboardHome from "../hr/HRDashboardHome";
 import EmployeeMaster from "../hr/EmployeeMaster";
 import Attendance from "../hr/Attendance";
+import LeaveManagement from "../hr/LeaveManagement";
+
 
 import RelievingEmployee from "../hr/RelievingEmployee";
 
 /* ===== TEMP PLACEHOLDERS (you can replace later) ===== */
 
-const LeaveManagement = () => <div className="p-6">Leave Management</div>;
+
 const Performance = () => <div className="p-6">Performance</div>;
 const Payroll = () => <div className="p-6">Payroll</div>;
 const Training = () => <div className="p-6">Training</div>;
