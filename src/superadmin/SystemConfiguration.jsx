@@ -359,11 +359,69 @@ export default function SystemConfiguration() {
                     </div>
                 );
             case 'backup':
-                return <div>Backup Settings</div>;
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="font-bold text-black mb-4">Automated Backup Schedule</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2"><span style={{ fontSize: '12px' }}>BACKUP FREQUENCY</span></label>
+                                    <select
+                                        onChange={(e) => handleChange('backupFrequency', e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    >
+                                        <option value="hourly">Every Hour</option>
+                                        <option value="daily" selected>Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2"><span style={{ fontSize: '12px' }}>BACKUP TIME</span></label>
+                                    <input
+                                        type="time"
+                                        defaultValue="02:00"
+                                        onChange={(e) => handleChange('backupTime', e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2"><span style={{ fontSize: '12px' }}>RETENTION PERIOD (days)</span></label>
+                                    <input
+                                        type="number"
+                                        defaultValue="30"
+                                        onChange={(e) => handleChange('backupRetentionPeriod', e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="font-bold text-black mb-4">Backup Status</h3>
+                            <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm text-gray-700">Last Backup:</span>
+                                    <span className="text-sm font-semibold text-black">Today, 02:00 AM</span>
+                                </div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm text-gray-700">Status:</span>
+                                    <span className="text-sm font-semibold text-green-600">✓ Success</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-700">Size:</span>
+                                    <span className="text-sm font-semibold text-black">2.4 GB</span>
+                                </div>
+                            </div>
+                            <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium">
+                                Trigger Manual Backup
+                            </button>
+                        </div>
+                    </div>
+                );
             case 'approval':
                 return <div>Approval Settings</div>;
             default:
-                return <div>General Settings</div>;
+                return null;
         }
 
     }
