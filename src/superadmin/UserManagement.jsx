@@ -507,7 +507,7 @@ export default function UserManagement() {
                       onChange={(e) => setShowPassword(e.target.checked)}
                       className="w-4 h-4 rounded border-gray-300 text-[#2563EB] focus:ring-[#2563EB]"
                     />
-                    <label htmlFor="showPassword" class="text-xs text-gray-600 cursor-pointer font-medium select-none">
+                    <label htmlFor="showPassword" className="text-xs text-gray-600 cursor-pointer font-medium select-none">
                       Show Password
                     </label>
                   </div>

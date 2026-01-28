@@ -419,7 +419,74 @@ export default function SystemConfiguration() {
                     </div>
                 );
             case 'approval':
-                return <div>Approval Settings</div>;
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="font-bold text-black mb-4">Approval Hierarchy</h3>
+                            <p className="text-sm text-gray-600 mb-4">Define multi-level approval workflows for different request types</p>
+
+                            <div className="space-y-4">
+                                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="font-semibold text-black mb-3">Capital Expense (&gt;₹1L)</div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Branch Manager</span>
+                                        <span>→</span>
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Regional Manager</span>
+                                        <span>→</span>
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Finance Head</span>
+                                        <span>→</span>
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Super Admin</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="font-semibold text-black mb-3">Discount Approval (&gt;10%)</div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Branch Manager</span>
+                                        <span>→</span>
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Regional Manager</span>
+                                        <span>→</span>
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Super Admin</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="font-semibold text-black mb-3">New Hire</div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Branch Manager</span>
+                                        <span>→</span>
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">HR Head</span>
+                                        <span>→</span>
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">Super Admin</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div>
+                            <h3 className="font-bold text-black mb-4">SLA Settings</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2"><span style={{ fontSize: '12px' }}>HIGH PRIPORITY (hours)</span></label>
+                                    <input
+                                        type="number"
+                                        defaultValue="4"
+                                        onchange={(e) => handleChange('highPrioritySLA', e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2"><span style={{ fontSize: '12px' }}>MEDIUM PRIPORITY (hours)</span></label>
+                                    <input
+                                        type="number"
+                                        defaultValue="24"
+                                        onchange={(e) => handleChange('mediumPrioritySLA', e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
             default:
                 return null;
         }
