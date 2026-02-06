@@ -177,93 +177,111 @@ export default function OrganizationManagement({ onNavigate }) {
             placeholder="Search organizations by name or ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D] focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
       </div>
 
       {/* Organization Cards */}
-      <div className="space-y-4">
-        {filteredOrgs.map((org, index) => (
-          <div key={index} className="bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-              <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-foreground mb-1">{org.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2 font-mono uppercase tracking-tight">{org.id}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4 text-muted-foreground/60" />
-                    <span className="line-clamp-1">{org.address}</span>
+      <div className="space-y-4 pb-20">
+        {filteredOrgs.length > 0 ? (
+          filteredOrgs.map((org, index) => (
+            <div key={index} className="bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground mb-1">{org.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-2 font-mono uppercase tracking-tight">{org.id}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4 text-muted-foreground/60" />
+                      <span className="line-clamp-1">{org.address}</span>
+                    </div>
                   </div>
                 </div>
+                <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full self-start">
+                  {org.status}
+                </span>
               </div>
-              <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full self-start">
-                {org.status}
-              </span>
-            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6 py-4 border-y border-gray-50">
-              <div>
-                <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">UUID</span>
-                <span className="text-sm font-mono text-muted-foreground">{org.uuid.slice(0, 8)}...</span>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6 py-4 border-y border-gray-50">
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">UUID</span>
+                  <span className="text-sm font-mono text-muted-foreground">{org.uuid.slice(0, 8)}...</span>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Tax ID</span>
+                  <span className="text-sm font-medium text-foreground">{org.taxId}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Fin. Year</span>
+                  <span className="text-sm font-medium text-foreground">{org.financialYear}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Branches</span>
+                  <span className="text-sm font-bold text-foreground">{org.branches}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Employees</span>
+                  <span className="text-sm font-bold text-foreground">{org.employees}</span>
+                </div>
               </div>
-              <div>
-                <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Tax ID</span>
-                <span className="text-sm font-medium text-foreground">{org.taxId}</span>
-              </div>
-              <div>
-                <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Fin. Year</span>
-                <span className="text-sm font-medium text-foreground">{org.financialYear}</span>
-              </div>
-              <div>
-                <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Branches</span>
-                <span className="text-sm font-bold text-foreground">{org.branches}</span>
-              </div>
-              <div>
-                <span className="text-xs text-muted-foreground block mb-1 uppercase font-bold">Employees</span>
-                <span className="text-sm font-bold text-foreground">{org.employees}</span>
-              </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-              <div className="text-sm">
-                <span className="text-muted-foreground">Total Revenue: </span>
-                <span className="font-bold text-foreground">{org.revenue}</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                <button
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-xs font-bold"
-                  onClick={() => {
-                    setSelectedOrgForBranch(org);
-                    onNavigate('branches');
-                  }}
-                >
-                  <GitBranch className="w-4 h-4" />
-                  Add Branch
-                </button>
-                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-bold text-muted-foreground" onClick={() => handleViewDetails(org)}>
-                  <Eye className="w-4 h-4" />
-                  View Details
-                </button>
-                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-bold text-muted-foreground" onClick={() => handleEdit(org)}>
-                  <Edit className="w-4 h-4" />
-                  Edit
-                </button>
-                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-bold text-muted-foreground" onClick={() => handleSettings(org)}>
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </button>
-                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors text-xs font-bold text-muted-foreground" onClick={() => handleDelete(org.id, org.name)}>
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Total Revenue: </span>
+                  <span className="font-bold text-foreground">{org.revenue}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <button
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-xs font-bold"
+                    onClick={() => {
+                      setSelectedOrgForBranch(org);
+                      onNavigate('branches');
+                    }}
+                  >
+                    <GitBranch className="w-4 h-4" />
+                    Add Branch
+                  </button>
+                  <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-bold text-muted-foreground" onClick={() => handleViewDetails(org)}>
+                    <Eye className="w-4 h-4" />
+                    View Details
+                  </button>
+                  <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-bold text-muted-foreground" onClick={() => handleEdit(org)}>
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-bold text-muted-foreground" onClick={() => handleSettings(org)}>
+                    <Settings className="w-4 h-4" />
+                    Config
+                  </button>
+                  <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-red-100 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-xs font-bold" onClick={() => handleDelete(org.id, org.name)}>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="bg-white rounded-xl p-12 border border-gray-100 shadow-sm text-center">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="text-lg font-bold text-black mb-1">No Organizations Found</h3>
+            <p className="text-gray-500 text-sm max-w-xs mx-auto">
+              We couldn't find any organizations matching "{searchTerm}". Try adjusting your search term.
+            </p>
+            <button
+              onClick={() => setSearchTerm('')}
+              className="mt-6 text-primary font-semibold text-sm hover:underline"
+            >
+              Clear search
+            </button>
           </div>
-        ))}
+        )}
       </div>
 
 

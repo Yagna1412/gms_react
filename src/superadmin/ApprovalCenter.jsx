@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDashboard } from '../../context/DashboardContext';
+import { useDashboard } from '../context/DashboardContext';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, AlertCircle, Clock, Filter, Search, FileText, Eye } from 'lucide-react';
 
@@ -141,7 +141,7 @@ export default function ApprovalCenter() {
                 placeholder="Search by ID, requester, or branch..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent hover:border-[#2563EB]/50 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent hover:border-primary/50 transition-all"
               />
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function ApprovalCenter() {
                 setFilterType('all');
                 setFilterPriority('all');
               }}
-              className="mt-6 text-[#2563EB] font-semibold text-sm hover:underline"
+              className="mt-6 text-primary font-semibold text-sm hover:underline"
             >
               Clear all filters
             </button>

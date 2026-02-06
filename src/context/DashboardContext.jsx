@@ -207,8 +207,30 @@ export const DashboardProvider = ({ children }) => {
     maxSessions: 2,
     failedLoginAttempts: 5,
     passwordExpiry: 90,
+    minPasswordLength: 8,
     backupFrequency: 'daily',
-    backupTime: '02:00'
+    backupTime: '02:00',
+    smtpHost: 'smtp.example.com',
+    smtpPort: '587',
+    smtpUsername: 'noreply@garageos.com',
+    smtpPassword: '',
+    smsProvider: 'twilio',
+    smsApiKey: '',
+    paymentGateway: 'razorpay',
+    razorpayApiKey: '',
+    razorpayApiSecret: '',
+    payuMerchantKey: '',
+    payuMerchantSalt: '',
+    enableAutoUpdates: true,
+    sendMaintenanceNotifications: true,
+    enableDebugMode: false,
+    requireUppercase: true,
+    requireNumbers: true,
+    requireSpecialChars: true,
+    preventPasswordReuse: true,
+    backupRetentionPeriod: 30,
+    highPrioritySLA: 4,
+    mediumPrioritySLA: 24
   });
 
   // Add audit log helper

@@ -268,7 +268,7 @@ export default function UserManagement() {
                 placeholder="Search by name, email, or role..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent hover:border-[#2563EB]/50 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent hover:border-primary/50 transition-all"
               />
             </div>
           </div>
@@ -308,108 +308,122 @@ export default function UserManagement() {
       </div>
 
       {/* User Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">User</th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Role</th>
-                <th className="hidden lg:table-cell text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Branch Access</th>
-                <th className="hidden md:table-cell text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Last Login</th>
-                <th className="hidden xl:table-cell text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Security</th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Status</th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user, index) => (
-                <tr key={index} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {user.avatar}
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-black">{user.name}</div>
-                        <div className="text-xs text-gray-500">{user.email}</div>
-                        <div className="text-xs text-gray-400">{user.id}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${roleColors[user.role]}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="hidden lg:table-cell py-4 px-6">
-                    <div className="flex items-start gap-1.5">
-                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-gray-700">
-                        {user.branches.slice(0, 2).join(', ')}
-                        {user.branches.length > 2 && (
-                          <span className="text-xs text-gray-500 ml-1">+{user.branches.length - 2} more</span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="hidden md:table-cell py-4 px-6">
-                    <span className="text-sm text-gray-700">{formatLastLogin(user.lastLogin)}</span>
-                  </td>
-                  <td className="hidden xl:table-cell py-4 px-6">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Shield className={`w-4 h-4 ${user.mfaEnabled ? 'text-green-500' : 'text-gray-300'}`} />
-                        <span className="text-xs text-gray-600">
-                          {user.mfaEnabled ? 'MFA Enabled' : 'MFA Disabled'}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Valid: {user.accountValidity}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold ${user.status === 'Active'
-                      ? 'bg-green-50 text-green-700'
-                      : 'bg-red-50 text-red-700'
-                      }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
-                        }`} />
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors group" title="Edit User" onClick={() => handleEdit(user)}>
-                        <Edit className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
-                      </button>
-                      <button className="p-2 hover:bg-yellow-50 rounded-lg transition-colors group" title="Reset Password" onClick={() => handleResetPassword(user.id, user.email)}>
-                        <Key className="w-4 h-4 text-gray-400 group-hover:text-yellow-500" />
-                      </button>
-                      {user.status === 'Locked' ? (
-                        <button className="p-2 hover:bg-green-50 rounded-lg transition-colors group" title="Unlock Account" onClick={() => handleToggleLock(user.id, user.name, user.status)}>
-                          <Unlock className="w-4 h-4 text-gray-400 group-hover:text-green-500" />
-                        </button>
-                      ) : (
-                        <button className="p-2 hover:bg-red-50 rounded-lg transition-colors group" title="Lock Account" onClick={() => handleToggleLock(user.id, user.name, user.status)}>
-                          <Lock className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
-                        </button>
-                      )}
-                      <button
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                        title="Deactivate User"
-                        onClick={() => handleDelete(user.id, user.name)}
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
-                      </button>
-                    </div>
-                  </td>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-20">
+        {filteredUsers.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">User</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Role</th>
+                  <th className="hidden lg:table-cell text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Branch Access</th>
+                  <th className="hidden md:table-cell text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Last Login</th>
+                  <th className="hidden xl:table-cell text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Security</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Status</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user, index) => (
+                  <tr key={index} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {user.avatar}
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-black">{user.name}</div>
+                          <div className="text-xs text-gray-500">{user.email}</div>
+                          <div className="text-xs text-gray-400">{user.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${roleColors[user.role]}`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="hidden lg:table-cell py-4 px-6">
+                      <div className="flex items-start gap-1.5">
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-gray-700">
+                          {user.branches.slice(0, 2).join(', ')}
+                          {user.branches.length > 2 && (
+                            <span className="text-primary font-medium ml-1">+{user.branches.length - 2} more</span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden md:table-cell py-4 px-6">
+                      <div className="text-sm text-gray-700 font-medium">{user.lastLogin}</div>
+                      <div className="text-xs text-gray-400">{user.lastLoginDate}</div>
+                    </td>
+                    <td className="hidden xl:table-cell py-4 px-6">
+                      <div className="flex items-center gap-1.5">
+                        <Shield className={`w-4 h-4 ${user.twoFactor ? 'text-green-500' : 'text-gray-300'}`} />
+                        <span className="text-xs text-gray-600">{user.twoFactor ? '2FA Active' : '2FA Off'}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase ${user.status === 'Active'
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-red-50 text-red-700'
+                        }`}>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors group" title="Edit User" onClick={() => handleEdit(user)}>
+                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
+                        </button>
+                        <button className="p-2 hover:bg-yellow-50 rounded-lg transition-colors group" title="Reset Password" onClick={() => handleResetPassword(user.id, user.email)}>
+                          <Key className="w-4 h-4 text-gray-400 group-hover:text-yellow-500" />
+                        </button>
+                        {user.status === 'Locked' ? (
+                          <button className="p-2 hover:bg-green-50 rounded-lg transition-colors group" title="Unlock Account" onClick={() => handleToggleLock(user.id, user.name, user.status)}>
+                            <Unlock className="w-4 h-4 text-gray-400 group-hover:text-green-500" />
+                          </button>
+                        ) : (
+                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors group" title="Lock Account" onClick={() => handleToggleLock(user.id, user.name, user.status)}>
+                            <Lock className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
+                          </button>
+                        )}
+                        <button
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
+                          title="Deactivate User"
+                          onClick={() => handleDelete(user.id, user.name)}
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="text-lg font-bold text-black mb-1">No Users Found</h3>
+            <p className="text-gray-500 text-sm max-w-xs mx-auto">
+              We couldn't find any users matching "{searchTerm}". Try adjusting your search or filters.
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFilterRole('all');
+                setFilterStatus('all');
+              }}
+              className="mt-6 text-primary font-semibold text-sm hover:underline"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Create User Modal */}

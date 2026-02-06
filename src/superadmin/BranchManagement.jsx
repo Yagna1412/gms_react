@@ -263,7 +263,7 @@ export default function BranchManagement() {
                             placeholder="Search by branch name, code, or location..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-muted/30 border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all placeholder:text-muted-foreground/50"
+                            className="w-full pl-12 pr-4 py-3 bg-muted/30 border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:text-muted-foreground/50"
                         />
                     </div>
 
@@ -317,219 +317,234 @@ export default function BranchManagement() {
             </div>
 
             {/* Branch Content (Table or Hierarchy) */}
-            {viewMode === 'table' ? (
-                <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-                    <div className="overflow-x-auto scrollbar-hide">
-                        <table className="w-full border-collapse min-w-[1000px] lg:min-w-0">
-                            <thead className="bg-muted/50">
-                                <tr>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Branch Code</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Name</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden md:table-cell">Category</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Location</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden lg:table-cell">Supervisor</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Status</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden sm:table-cell">Perf.</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden xl:table-cell">Active Jobs</th>
-                                    <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Revenue</th>
-                                    <th className="text-right py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentBranches.map((branch, index) => (
-                                    <tr key={index} className="border-t border-border hover:bg-muted/30 transition-colors group">
-                                        <td className="py-4 px-6">
-                                            <span className="text-sm font-bold text-foreground font-mono">{branch.code}</span>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{branch.name}</span>
-                                                <span className="text-[10px] text-muted-foreground font-medium md:hidden">{branch.category}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6 hidden md:table-cell">
-                                            <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase ${categoryColors[branch.category]}`}>
-                                                {branch.category}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-2 max-w-[150px] md:max-w-xs">
-                                                <MapPin className="w-3.5 h-3.5 text-muted-foreground/60 flex-shrink-0" />
-                                                <span className="text-xs text-foreground/80 truncate font-medium">{branch.location}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6 hidden lg:table-cell">
-                                            <span className="text-xs text-foreground/80 font-medium">{branch.supervisor}</span>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase ${branch.status === 'Active'
-                                                ? 'bg-green-500/10 text-green-600'
-                                                : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${branch.status === 'Active' ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/40'
-                                                    }`} />
-                                                {branch.status}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 px-6 hidden sm:table-cell">
-                                            <div className="flex items-center gap-1">
-                                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                                <span className="text-xs font-bold text-foreground">{branch.performance}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6 hidden xl:table-cell">
-                                            <span className="text-xs font-bold text-foreground">{branch.activeJobs}</span>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <span className="text-sm font-bold text-foreground">{branch.revenue}</span>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => handleView(branch)}
-                                                    className="p-2 hover:bg-primary/10 rounded-xl transition-all text-muted-foreground hover:text-primary" title="View Details">
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEdit(branch)}
-                                                    className="p-2 hover:bg-amber-500/10 rounded-xl transition-all text-muted-foreground hover:text-amber-600" title="Edit">
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(branch.id, branch.name)}
-                                                    className="p-2 hover:bg-red-500/10 rounded-xl transition-all text-muted-foreground hover:text-destructive" title="Delete">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+            {filteredBranches.length > 0 ? (
+                viewMode === 'table' ? (
+                    <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+                        <div className="overflow-x-auto scrollbar-hide">
+                            <table className="w-full border-collapse min-w-[1000px] lg:min-w-0">
+                                <thead className="bg-muted/50">
+                                    <tr>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Branch Code</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Name</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden md:table-cell">Category</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Location</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden lg:table-cell">Supervisor</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Status</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden sm:table-cell">Perf.</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase hidden xl:table-cell">Active Jobs</th>
+                                        <th className="text-left py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Revenue</th>
+                                        <th className="text-right py-4 px-6 text-[10px] font-bold text-muted-foreground uppercase">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {currentBranches.map((branch, index) => (
+                                        <tr key={index} className="border-t border-border hover:bg-muted/30 transition-colors group">
+                                            <td className="py-4 px-6">
+                                                <span className="text-sm font-bold text-foreground font-mono">{branch.code}</span>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{branch.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-medium md:hidden">{branch.category}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6 hidden md:table-cell">
+                                                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase ${categoryColors[branch.category]}`}>
+                                                    {branch.category}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-2 max-w-[150px] md:max-w-xs">
+                                                    <MapPin className="w-3.5 h-3.5 text-muted-foreground/60 flex-shrink-0" />
+                                                    <span className="text-xs text-foreground/80 truncate font-medium">{branch.location}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6 hidden lg:table-cell">
+                                                <span className="text-xs text-foreground/80 font-medium">{branch.supervisor}</span>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase ${branch.status === 'Active'
+                                                    ? 'bg-green-500/10 text-green-600'
+                                                    : 'bg-muted text-muted-foreground'
+                                                    }`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${branch.status === 'Active' ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/40'
+                                                        }`} />
+                                                    {branch.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 hidden sm:table-cell">
+                                                <div className="flex items-center gap-1">
+                                                    <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                                    <span className="text-xs font-bold text-foreground">{branch.performance}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6 hidden xl:table-cell">
+                                                <span className="text-xs font-bold text-foreground">{branch.activeJobs}</span>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <span className="text-sm font-bold text-foreground">{branch.revenue}</span>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        onClick={() => handleView(branch)}
+                                                        className="p-2 hover:bg-primary/10 rounded-xl transition-all text-muted-foreground hover:text-primary" title="View Details">
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleEdit(branch)}
+                                                        className="p-2 hover:bg-amber-500/10 rounded-xl transition-all text-muted-foreground hover:text-amber-600" title="Edit">
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(branch.id, branch.name)}
+                                                        className="p-2 hover:bg-red-500/10 rounded-xl transition-all text-muted-foreground hover:text-destructive" title="Delete">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+                ) : (
+                    <div className="space-y-4 py-8 max-w-5xl mx-auto px-4">
+                        {organizations.map(org => {
+                            const orgBranches = currentBranches.filter(b => b.orgId === org.id);
+                            if (orgBranches.length === 0) return null;
+                            const isExpanded = expandedOrgs[org.id];
 
-                </div>
-            ) : (
-                <div className="space-y-4 py-8 max-w-5xl mx-auto px-4">
-                    {(currentBranches && currentBranches.length > 0) ? organizations.map(org => {
-                        const orgBranches = currentBranches.filter(b => b.orgId === org.id);
-                        if (orgBranches.length === 0) return null;
-                        const isExpanded = expandedOrgs[org.id];
-
-                        return (
-                            <div key={org.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden transition-all duration-300">
-                                {/* Accordion Header */}
-                                <button
-                                    onClick={() => toggleOrg(org.id)}
-                                    className={`w-full flex items-center justify-between p-6 transition-colors ${isExpanded ? 'bg-muted/30' : 'hover:bg-muted/10'}`}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl transition-all duration-300 ${isExpanded ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110' : 'bg-primary/10 text-primary'}`}>
-                                            <Building2 className="w-6 h-6" />
-                                        </div>
-                                        <div className="text-left">
-                                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                                                {org.name}
-                                                <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{org.id}</span>
-                                            </h3>
-                                            <div className="flex items-center gap-4 mt-1">
-                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase">
-                                                    <Users className="w-3 h-3" />
-                                                    {orgBranches.length} Branches
-                                                </div>
-                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-green-600 uppercase">
-                                                    <TrendingUp className="w-3 h-3" />
-                                                    ₹{(orgBranches.reduce((sum, b) => {
-                                                        const rev = b?.revenue ? (typeof b.revenue === 'string'
-                                                            ? parseFloat(b.revenue.replace(/[^0-9.-]+/g, "")) || 0
-                                                            : b.revenue) : 0;
-                                                        return sum + rev;
-                                                    }, 0) / 10000000).toFixed(2)} Cr
+                            return (
+                                <div key={org.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden transition-all duration-300">
+                                    {/* Accordion Header */}
+                                    <button
+                                        onClick={() => toggleOrg(org.id)}
+                                        className={`w-full flex items-center justify-between p-6 transition-colors ${isExpanded ? 'bg-muted/30' : 'hover:bg-muted/10'}`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-xl transition-all duration-300 ${isExpanded ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110' : 'bg-primary/10 text-primary'}`}>
+                                                <Building2 className="w-6 h-6" />
+                                            </div>
+                                            <div className="text-left">
+                                                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                                    {org.name}
+                                                    <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{org.id}</span>
+                                                </h3>
+                                                <div className="flex items-center gap-4 mt-1">
+                                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase">
+                                                        <Users className="w-3 h-3" />
+                                                        {orgBranches.length} Branches
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-green-600 uppercase">
+                                                        <TrendingUp className="w-3 h-3" />
+                                                        ₹{(orgBranches.reduce((sum, b) => {
+                                                            const rev = b?.revenue ? (typeof b.revenue === 'string'
+                                                                ? parseFloat(b.revenue.replace(/[^0-9.-]+/g, "")) || 0
+                                                                : b.revenue) : 0;
+                                                            return sum + rev;
+                                                        }, 0) / 10000000).toFixed(2)} Cr
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className={`p-2 rounded-lg bg-muted transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
-                                        <ChevronDown className="w-5 h-5" />
-                                    </div>
-                                </button>
+                                        <div className={`p-2 rounded-lg bg-muted transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
+                                            <ChevronDown className="w-5 h-5" />
+                                        </div>
+                                    </button>
 
-                                {/* Accordion Content */}
-                                <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] border-t border-border opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-                                    <div className="p-4 space-y-3 bg-muted/5">
-                                        {orgBranches.map((branch) => (
-                                            <div key={branch.id} className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border border-border rounded-xl hover:border-primary/30 transition-all hover:shadow-md">
-                                                <div className="flex items-center gap-4 w-full sm:w-auto">
-                                                    <div className={`p-2.5 rounded-lg shrink-0 ${categoryColors[branch.category] || 'bg-muted text-muted-foreground'}`}>
-                                                        <MapPin className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <h4 className="font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                                                                {branch.name}
-                                                            </h4>
-                                                            <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded leading-none shrink-0 border border-border/50">
-                                                                {branch.code}
-                                                            </span>
+                                    {/* Accordion Content */}
+                                    <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] border-t border-border opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                                        <div className="p-4 space-y-3 bg-muted/5">
+                                            {orgBranches.map((branch) => (
+                                                <div key={branch.id} className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border border-border rounded-xl hover:border-primary/30 transition-all hover:shadow-md">
+                                                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                                                        <div className={`p-2.5 rounded-lg shrink-0 ${categoryColors[branch.category] || 'bg-muted text-muted-foreground'}`}>
+                                                            <MapPin className="w-5 h-5" />
                                                         </div>
-                                                        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
-                                                            <div className="flex items-center gap-1">
-                                                                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                                                                <span className="font-bold text-foreground/80">{branch.performance}</span>
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <h4 className="font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                                                                    {branch.name}
+                                                                </h4>
+                                                                <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded leading-none shrink-0 border border-border/50">
+                                                                    {branch.code}
+                                                                </span>
                                                             </div>
-                                                            <div className="w-1 h-1 rounded-full bg-border" />
-                                                            <div className="flex items-center gap-1 truncate max-w-[150px]">
-                                                                <Users className="w-3 h-3" />
-                                                                <span className="truncate">{branch.supervisor}</span>
+                                                            <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
+                                                                <div className="flex items-center gap-1">
+                                                                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                                                    <span className="font-bold text-foreground/80">{branch.performance}</span>
+                                                                </div>
+                                                                <div className="w-1 h-1 rounded-full bg-border" />
+                                                                <div className="flex items-center gap-1 truncate max-w-[150px]">
+                                                                    <Users className="w-3 h-3" />
+                                                                    <span className="truncate">{branch.supervisor}</span>
+                                                                </div>
+                                                                <div className="w-1 h-1 rounded-full bg-border" />
+                                                                <div className="font-bold text-foreground/80">
+                                                                    {branch.revenue}
+                                                                </div>
                                                             </div>
-                                                            <div className="w-1 h-1 rounded-full bg-border" />
-                                                            <div className="font-bold text-foreground/80">
-                                                                {branch.revenue}
-                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-border/50">
+                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${branch.status === 'Active' ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'}`}>
+                                                            {branch.status}
+                                                        </span>
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={() => handleView(branch)}
+                                                                className="p-2 hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary transition-colors"
+                                                                title="View Details"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleEdit(branch)}
+                                                                className="p-2 hover:bg-amber-500/10 rounded-lg text-muted-foreground hover:text-amber-600 transition-colors"
+                                                                title="Edit Branch"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(branch.id, branch.name)}
+                                                                className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+                                                                title="Delete Branch"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-border/50">
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${branch.status === 'Active' ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'}`}>
-                                                        {branch.status}
-                                                    </span>
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            onClick={() => handleView(branch)}
-                                                            className="p-2 hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary transition-colors"
-                                                            title="View Details"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleEdit(branch)}
-                                                            className="p-2 hover:bg-amber-500/10 rounded-lg text-muted-foreground hover:text-amber-600 transition-colors"
-                                                            title="Edit Branch"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(branch.id, branch.name)}
-                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
-                                                            title="Delete Branch"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    }) : (
-                        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-muted/5 rounded-3xl border-2 border-dashed border-border">
-                            <MapPin className="w-12 h-12 mb-4 opacity-20" />
-                            <p className="text-sm font-bold uppercase tracking-widest">No branches found matching your filters</p>
-                        </div>
-                    )}
+                            );
+                        })}
+                    </div>
+                )
+            ) : (
+                <div className="bg-white rounded-2xl p-12 border border-border shadow-sm text-center mb-8">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-bold text-black mb-1">No Branches Found</h3>
+                    <p className="text-gray-500 text-sm max-w-xs mx-auto">
+                        We couldn't find any branches matching "{searchTerm}". Try adjusting your search term.
+                    </p>
+                    <button
+                        onClick={() => {
+                            setSearchTerm('');
+                            setFilterStatus('all');
+                        }}
+                        className="mt-6 text-primary font-semibold text-sm hover:underline"
+                    >
+                        Clear search
+                    </button>
                 </div>
             )}
 
