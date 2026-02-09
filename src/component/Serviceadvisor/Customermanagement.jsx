@@ -28,7 +28,7 @@ export default function CustomerManagement() {
   const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   
-  // Logic for Edit Functionality
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -57,7 +57,7 @@ export default function CustomerManagement() {
     return matchesSearch && matchesType && matchesBranch;
   });
 
-  // Handle Edit Click
+
   const handleEdit = (customer) => {
     setIsEditing(true);
     setEditingId(customer.id);
@@ -87,11 +87,11 @@ export default function CustomerManagement() {
     }
 
     if (isEditing) {
-      // Logic for Update
+      
       updateCustomer(editingId, formData);
       toast.success(`Customer "${formData.name}" updated successfully!`);
     } else {
-      // Logic for New Registration
+    
       const duplicatePhone = customers.find(cust => cust.phone === formData.phone);
       const duplicateEmail = customers.find(cust => cust.email === formData.email);
       
