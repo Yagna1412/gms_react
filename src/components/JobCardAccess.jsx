@@ -213,7 +213,7 @@ export default function JobCardAccess() {
             </div>
 
             <div className="sticky bottom-0 bg-gray-50 p-6 border-t border-gray-200">
-              <button onClick={() => setViewingJob(null)} className="w-full px-5 py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-900">
+              <button onClick={() => setViewingJob(null)} className="w-full px-5 py-2.5 bg-[#2563EB] text-white rounded-lg font-medium hover:bg-[1D4ED8]">
                 Close
               </button>
             </div>  

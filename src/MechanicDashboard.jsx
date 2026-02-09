@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { MechanicProvider } from './contexts/MechanicContext';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
-//  COMMENTED SONNER (ONLY CHANGE)
-// import { Toaster } from 'sonner';
-// import { toast } from 'sonner';
-
-import { 
+import {
   LayoutDashboard,
   ClipboardList,
   Wrench,
@@ -19,12 +16,10 @@ import {
   Bell
 } from 'lucide-react';
 
-
-
-// Import all Mechanic module components
+// Components
 import MechanicHome from './components/MechanicHome';
 import JobCardAccess from './components/JobCardAccess';
-import JobExecution from './components/JobExecution'; 
+import JobExecution from './components/JobExecution';
 import PartsRequest from './components/PartsRequest';
 import ProgressUpdates from './components/ProgressUpdates';
 import QcSubmission from './components/QcSubmission';
@@ -32,71 +27,47 @@ import Performance from './components/Performance';
 import Training from './components/Training';
 
 
-
 function DashboardContent({ onLogout }) {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [notifications] = useState();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [notifications] = useState(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = () => {
-    setShowLogoutModal(true);
-  };
+  const handleLogout = () => setShowLogoutModal(true);
 
   const confirmLogout = () => {
-    // ❌ toast.success('Logging out...');
     setTimeout(() => {
       onLogout();
     }, 500);
   };
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'jobcards', label: 'My Job Cards', icon: ClipboardList },
-    { id: 'execution', label: 'Job Execution', icon: Wrench },
-    { id: 'parts', label: 'Parts Request', icon: Package },
-    { id: 'progress', label: 'Progress Updates', icon: MessageSquare },
-    { id: 'qc', label: 'QC Submission', icon: CheckCircle },
-    { id: 'performance', label: 'Performance', icon: TrendingUp },
-    { id: 'training', label: 'Training', icon: GraduationCap }
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/jobcards', label: 'My Job Cards', icon: ClipboardList },
+    { path: '/execution', label: 'Job Execution', icon: Wrench },
+    { path: '/parts', label: 'Parts Request', icon: Package },
+    { path: '/progress', label: 'Progress Updates', icon: MessageSquare },
+    { path: '/qc', label: 'QC Submission', icon: CheckCircle },
+    { path: '/performance', label: 'Performance', icon: TrendingUp },
+    { path: '/training', label: 'Training', icon: GraduationCap }
   ];
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <MechanicHome onNavigate={setActiveTab} />;
-      case 'jobcards':
-        return <JobCardAccess />;
-      case 'execution':
-        return <JobExecution />;
-      case 'parts':
-        return <PartsRequest />;
-      case 'progress':
-        return <ProgressUpdates />;
-      case 'qc':
-        return <QcSubmission />;
-      case 'performance':
-        return <Performance />;
-      case 'training':
-        return <Training />;
-      default:
-        return <MechanicHome onNavigate={setActiveTab} />;
-    }
-  };
 
   return (
     <div className="flex h-screen bg-[#F5F7FA]">
+
       {/* Sidebar */}
       <aside className="w-[280px] bg-[#EBF3FF] text-[#1E293B] border-r border-[#D1E3FF] flex flex-col">
 
         {/* Logo */}
         <div className="p-6 border-b border-[#D1E3FF]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
               <Wrench className="text-white" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold tracking-tight">GMS</span>
-              <span className="text-xs text-[#64748B]">Mechanic Portal</span>
+            <div>
+              <div className="font-bold">GMS</div>
+              <div className="text-xs text-gray-500">Mechanic Portal</div>
             </div>
           </div>
         </div>
@@ -106,12 +77,12 @@ function DashboardContent({ onLogout }) {
           <div className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              
+              const isActive = location.pathname === item.path;
+
               return (
                 <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     isActive
                       ? 'bg-[#2563EB] text-white font-semibold shadow-lg'
@@ -173,9 +144,18 @@ function DashboardContent({ onLogout }) {
           </div>
         </header>
 
-        {/* Content */}
+        {/* Routed Content */}
         <main className="flex-1 overflow-y-auto">
-          {renderContent()}
+          <Routes>
+            <Route path="/" element={<MechanicHome />} />
+            <Route path="/jobcards" element={<JobCardAccess />} />
+            <Route path="/execution" element={<JobExecution />} />
+            <Route path="/parts" element={<PartsRequest />} />
+            <Route path="/progress" element={<ProgressUpdates />} />
+            <Route path="/qc" element={<QcSubmission />} />
+            <Route path="/performance" element={<Performance />} />
+            <Route path="/training" element={<Training />} />
+          </Routes>
         </main>
       </div>
 
@@ -214,8 +194,6 @@ function DashboardContent({ onLogout }) {
 export default function MechanicDashboard({ onLogout }) {
   return (
     <MechanicProvider>
-      {/* ❌ Toaster commented */}
-      {/* <Toaster position="top-right" richColors /> */}
       <DashboardContent onLogout={onLogout} />
     </MechanicProvider>
   );

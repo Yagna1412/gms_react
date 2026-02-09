@@ -95,6 +95,47 @@ export const MechanicProvider = ({ children }) => {
     }
   ]);
 
+//   const updatePartsRequest = (updatedRequest) => {
+//   setPartsRequests(prev =>
+//     prev.map(req =>
+//       req.id === updatedRequest.id ? updatedRequest : req
+//     )
+//   );
+// };
+
+const updatePartsRequest = (updatedRequest) => {
+  setPartsRequests(prev =>
+    prev.map(req =>
+      req.id === updatedRequest.id ? updatedRequest : req
+    )
+  );
+
+ 
+
+  // ✅ IF STATUS IS RECEIVED → ALLOCATE PARTS TO JOB
+  if (updatedRequest.status === 'Received') {
+    setJobs(prevJobs =>
+      prevJobs.map(job => {
+        if (job.id === updatedRequest.jobCardId) {
+          return {
+            ...job,
+            parts: [
+              ...job.parts,
+              ...updatedRequest.parts.map(p => ({
+                name: p.name,
+                qty: p.qty,
+                status: 'Issued'
+              }))
+            ]
+          };
+        }
+        return job;
+      })
+    );
+  }
+};
+
+
   // Performance Metrics (view-only, personal data)
   const [performanceMetrics] = useState({
     thisMonth: {
@@ -189,12 +230,28 @@ export const MechanicProvider = ({ children }) => {
     }));
   };
 
-  const submitForQC = (jobId) => {
-    setJobs(jobs.map(job => 
-      job.id === jobId 
-        ? { ...job, qcStatus: 'Submitted', status: 'QC Pending' }
-        : job
-    ));
+  // const submitForQC = (jobId) => {
+  //   setJobs(jobs.map(job => 
+  //     job.id === jobId 
+  //       ? { ...job, qcStatus: 'Submitted', status: 'QC Pending' }
+  //       : job
+  //   ));
+  // };
+
+    const submitForQc = (jobId) => {
+
+    setJobs(prevJobs =>
+      prevJobs.map(job =>
+
+        job.id === jobId
+          ? {
+              ...job,
+              qcStatus: 'Submitted',
+              status: 'QC Pending'
+            }
+          : job
+      )
+    );
   };
 
   const addNote = (jobId, note, photoCount = 0) => {
@@ -233,21 +290,23 @@ export const MechanicProvider = ({ children }) => {
     ));
   };
 
-  const value = {
-    currentMechanic,
-    jobs,
-    partsRequests,
-    performanceMetrics,
-    trainings,
-    certifications,
-    startJob,
-    updateProgress,
-    completeJob,
-    submitForQC,
-    addNote,
-    requestParts,
-    acknowledgePartsReceipt
-  };
+const value = {
+  currentMechanic,
+  jobs,
+  partsRequests,
+  performanceMetrics,
+  trainings,
+  certifications,
+  startJob,
+  updateProgress,
+  completeJob,
+  submitForQc,
+  addNote,
+  requestParts,
+  acknowledgePartsReceipt,
+  updatePartsRequest,
+  
+};
 
   return <MechanicContext.Provider value={value}>{children}</MechanicContext.Provider>;
 };

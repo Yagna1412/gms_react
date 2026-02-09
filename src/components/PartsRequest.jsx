@@ -1,11 +1,17 @@
+
 import React, { useState } from 'react';
 import { useMechanic } from '../contexts/MechanicContext';
-import { Package, Plus, X } from 'lucide-react';
+import { Plus, X, Eye, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PartsRequest() {
-  const { jobs, partsRequests, requestParts, acknowledgePartsReceipt } = useMechanic();
+  const { jobs, partsRequests, requestParts, acknowledgePartsReceipt, updatePartsRequest } = useMechanic();
+
   const [showModal, setShowModal] = useState(false);
+
+  // View modal state
+  const [editRequest, setEditRequest] = useState(null);
+
   const [formData, setFormData] = useState({
     jobCardId: '',
     partName: '',
@@ -13,7 +19,7 @@ export default function PartsRequest() {
     reason: ''
   });
 
-const handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.jobCardId || !formData.partName) {
       toast.error('Please fill all required fields');
@@ -25,6 +31,7 @@ const handleSubmit = (e) => {
       [{ name: formData.partName, qty: formData.quantity }],
       'Additional'
     );
+
     toast.success(`Parts request ${newRequest.id} submitted for approval`);
     setShowModal(false);
     setFormData({ jobCardId: '', partName: '', quantity: 1, reason: '' });
@@ -35,22 +42,31 @@ const handleSubmit = (e) => {
     toast.success('Parts received and acknowledged');
   };
 
-  const activeJobs = jobs.filter(j => j.status === 'Assigned' || j.status === 'In-Progress');
+ 
+
+  const activeJobs = jobs.filter(
+    j => j.status === 'Assigned' || j.status === 'In-Progress'
+  );
 
   return (
     <div className="p-8">
+
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-bold text-black mb-2">Parts Request Management</h1>
           <p className="text-gray-600 text-sm">Request and track parts for your jobs</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#1D4ED8] transition-colors font-semibold">
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg font-semibold"
+        >
           <Plus className="w-5 h-5" />
           Request Parts
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-8">
+       <div className="grid grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
           <span className="text-sm text-gray-600">Pending Requests</span>
           <div className="text-3xl font-bold text-black mt-2">{partsRequests.filter(r => r.status === 'Pending').length}</div>
@@ -65,45 +81,66 @@ const handleSubmit = (e) => {
         </div>
       </div>
 
-         {/* Parts Requests Table */}
+
+      {/* TABLE */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Request ID</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Job Card</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Parts</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Type</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Status</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Requested At</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Actions</th>
+              <th className="py-4 px-6 text-xs font-semibold text-gray-600">Request ID</th>
+              <th className="py-4 px-6 text-xs font-semibold text-gray-600">Job Card</th>
+              <th className="py-4 px-6 text-xs font-semibold text-gray-600">Parts</th>
+              <th className="py-4 px-6 text-xs font-semibold text-gray-600">Type</th>
+              <th className="py-4 px-6 text-xs font-semibold text-gray-600">Status</th>
+              <th className="py-4 px-6 text-xs font-semibold text-gray-600">Requested At</th>
+              <th className="py-4 px-6 text-xs font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-100">
-            {partsRequests.map((req) => (
+            {partsRequests .filter(req => req.status !== 'Received') .map((req) => (
               <tr key={req.id} className="hover:bg-gray-50">
-                <td className="py-4 px-6"><span className="text-sm font-mono text-black">{req.id}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{req.jobCardId}</span></td>
+                <td className="py-4 px-6 font-mono text-sm">{req.id}</td>
+                <td className="py-4 px-6 text-sm">{req.jobCardId}</td>
+
                 <td className="py-4 px-6">
-                  {req.parts.map((part, idx) => (
-                    <div key={idx} className="text-sm text-gray-700">{part.name} (x{part.qty})</div>
+                  {req.parts.map((p, i) => (
+                    <div key={i} className="text-sm">
+                      {p.name} (x{p.qty})
+                    </div>
                   ))}
                 </td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{req.type}</span></td>
+
+                <td className="py-4 px-6 text-sm">{req.type}</td>
+
                 <td className="py-4 px-6">
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                    req.status === 'Pending' ? 'bg-yellow-50 text-yellow-700' :
-                    req.status === 'Approved' ? 'bg-blue-50 text-blue-700' :
-                    'bg-green-50 text-green-700'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold
+                    ${req.status === 'Pending' ? 'bg-yellow-50 text-yellow-700' :
+                      req.status === 'Approved' ? 'bg-blue-50 text-blue-700' :
+                      'bg-green-50 text-green-700'}`}>
                     {req.status}
                   </span>
                 </td>
-                <td className="py-4 px-6"><span className="text-xs text-gray-600">{new Date(req.requestedAt).toLocaleString()}</span></td>
-                <td className="py-4 px-6">
+
+                <td className="py-4 px-6 text-xs">
+                  {new Date(req.requestedAt).toLocaleString()}
+                </td>
+
+                {/* ACTIONS */}
+                <td className="py-4 px-6 flex gap-3">
+                  <button
+                    onClick={() => setEditRequest(req)}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <Eye size={16} />
+                  </button>
+
                   {req.status === 'Approved' && (
-                    <button onClick={() => handleAcknowledge(req.id)} className="text-xs text-green-600 hover:text-green-700 font-medium">
-                      Acknowledge Receipt
+                    <button
+                      onClick={() => handleAcknowledge(req.id)}
+                      className="text-green-600 text-xs font-medium"
+                    >
+                      Acknowledge
                     </button>
                   )}
                 </td>
@@ -112,8 +149,103 @@ const handleSubmit = (e) => {
           </tbody>
         </table>
       </div>
-            
-    {/* Allocated Parts for Active Jobs */}
+
+      
+      {/* VIEW MODAL */}
+      {editRequest && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
+
+      
+      <div className="p-6 border-b flex justify-between items-center">
+        <h2 className="font-bold text-lg">Edit Parts Request</h2>
+        <button onClick={() => setEditRequest(null)}>✕</button>
+      </div>
+
+      
+      <div className="p-6 space-y-4">
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <label className="text-gray-500">Request ID</label>
+            <div className="font-mono">{editRequest.id}</div>
+          </div>
+          <div>
+            <label className="text-gray-500">Job Card</label>
+            <div>{editRequest.jobCardId}</div>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-600">STATUS</label>
+          <select
+            value={editRequest.status}
+            onChange={e =>
+              setEditRequest({ ...editRequest, status: e.target.value })
+            }
+            className="w-full mt-1 px-3 py-2 border rounded-lg"
+          >
+            <option>Pending</option>
+            <option>Received</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-600">PART DETAILS</label>
+
+          {editRequest.parts.map((part, idx) => (
+            <div key={idx} className="grid grid-cols-3 gap-3 mt-2">
+              <input
+                value={part.name}
+                onChange={(e) => {
+                  const parts = [...editRequest.parts];
+                  parts[idx].name = e.target.value;
+                  setEditRequest({ ...editRequest, parts });
+                }}
+                className="col-span-2 px-3 py-2 border rounded"
+              />
+              <input
+                type="number"
+                min="1"
+                value={part.qty}
+                onChange={(e) => {
+                  const parts = [...editRequest.parts];
+                  parts[idx].qty = Number(e.target.value);
+                  setEditRequest({ ...editRequest, parts });
+                }}
+                className="px-3 py-2 border rounded"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+     
+      <div className="p-6 border-t flex justify-end gap-3 bg-gray-50">
+        <button
+          onClick={() => setEditRequest(null)}
+          className="px-4 py-2 border rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            updatePartsRequest(editRequest);
+            toast.success('Parts request updated');
+            setEditRequest(null);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          Save Changes
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+
+       {/* Allocated Parts for Active Jobs */}
       <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
         <h2 className="font-bold text-black mb-4">Allocated Parts (Active Jobs)</h2>
         <div className="space-y-4">
@@ -208,8 +340,7 @@ const handleSubmit = (e) => {
         </div>
       )}
       
-     
-    </div>
 
+    </div>
   );
 }
