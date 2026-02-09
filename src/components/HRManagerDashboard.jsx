@@ -14,19 +14,15 @@ import {
   PersonStanding,
 } from "lucide-react";
 
-/* ===== IMPORT REAL PAGES ===== */
+/*IMPORT REAL PAGES */
 import HRDashboardHome from "../hr/HRDashboardHome";
 import EmployeeMaster from "../hr/EmployeeMaster";
 import Attendance from "../hr/Attendance";
 import LeaveManagement from "../hr/LeaveManagement";
-
-
+import PerformanceManagement from "../hr/PerformanceManagement";
 import RelievingEmployee from "../hr/RelievingEmployee";
 
-/* ===== TEMP PLACEHOLDERS (you can replace later) ===== */
-
-
-const Performance = () => <div className="p-6">Performance</div>;
+/*  TEMP PLACEHOLDERS (UNCHANGED)  */
 const Payroll = () => <div className="p-6">Payroll</div>;
 const Training = () => <div className="p-6">Training</div>;
 const Grievance = () => <div className="p-6">Grievance</div>;
@@ -34,47 +30,101 @@ const Grievance = () => <div className="p-6">Grievance</div>;
 const HRManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "employees", label: "Employee Master", icon: Users },
-    { id: "attendance", label: "Attendance", icon: ClipboardList },
-    { id: "leaves", label: "Leave Management", icon: Calendar },
-    { id: "performance", label: "Performance", icon: Activity },
-    { id: "payroll", label: "Payroll", icon: IndianRupee },
-    { id: "training", label: "Training", icon: GraduationCap },
-    { id: "grievance", label: "Grievance", icon: AlertCircle },
-    { id: "relieving", label: "Relieving Employee", icon: PersonStanding },
-  ];
+  /* SHARED DATA (SOURCE) */
 
+  const [leaves, setLeaves] = useState([
+    { id: 1, name: "Rajesh Kumar", status: "Pending" },
+    { id: 2, name: "Amit Verma", status: "Pending" },
+  ]);
+
+  const [reviews, setReviews] = useState([
+    {
+      id: 1,
+      name: "Rajesh Kumar",
+      empId: "EMP/MUM/2024/0001",
+      cycle: "Q4 2024",
+      date: "2024-12-15",
+      score: 4.6,
+      reviewer: "Amit Sharma",
+      status: "Completed",
+    },
+    {
+      id: 2,
+      name: "Priya Singh",
+      empId: "EMP/MUM/2024/0002",
+      cycle: "Q4 2024",
+      date: "2024-12-16",
+      score: 4.4,
+      reviewer: "Sunita Patel",
+      status: "Completed",
+    },
+    {
+      id: 3,
+      name: "Neha Desai",
+      empId: "EMP/MUM/2024/0003",
+      cycle: "Q4 2024",
+      date: "Not scheduled",
+      score: null,
+      reviewer: "Sunita Patel",
+      status: "Pending",
+    },
+  ]);
+
+  /* PAGE RENDERING */
   const renderContent = () => {
     switch (activeTab) {
-      
-     case "dashboard":
-        return <HRDashboardHome onNavigate={setActiveTab} />;
+      case "dashboard":
+        return (
+          <HRDashboardHome
+            onNavigate={setActiveTab}
+            leaves={leaves}
+            reviews={reviews}
+          />
+        );
+
       case "employees":
         return <EmployeeMaster />;
+
       case "attendance":
         return <Attendance />;
+
       case "leaves":
-        return <LeaveManagement />;
+        return (
+          <LeaveManagement
+            leaves={leaves}
+            setLeaves={setLeaves}
+          />
+        );
+
       case "performance":
-        return <Performance />;
+        return (
+          <PerformanceManagement
+            onNavigate={setActiveTab}
+            reviews={reviews}         
+            setReviews={setReviews}    
+          />
+        );
+
       case "payroll":
         return <Payroll />;
+
       case "training":
         return <Training />;
+
       case "grievance":
         return <Grievance />;
+
       case "relieving":
         return <RelievingEmployee />;
+
       default:
-        return <HRDashboardHome />;
+        return null;
     }
   };
 
   return (
     <div className="flex h-screen bg-[#F5F7FB]">
-      {/* ================= SIDEBAR ================= */}
+      {/*  SIDEBAR */}
       <aside className="w-64 bg-[#E0ECFF] border-r border-[#BFDBFE] flex flex-col">
         {/* Brand */}
         <div className="p-6 border-b border-[#BFDBFE]">
@@ -91,7 +141,17 @@ const HRManagerDashboard = () => {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
-          {navItems.map(({ id, label, icon: Icon }) => (
+          {[
+            ["dashboard", "Dashboard", LayoutDashboard],
+            ["employees", "Employee Master", Users],
+            ["attendance", "Attendance", ClipboardList],
+            ["leaves", "Leave Management", Calendar],
+            ["performance", "Performance", Activity],
+            ["payroll", "Payroll", IndianRupee],
+            ["training", "Training", GraduationCap],
+            ["grievance", "Grievance", AlertCircle],
+            ["relieving", "Relieving Employee", PersonStanding],
+          ].map(([id, label, Icon]) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
@@ -115,7 +175,7 @@ const HRManagerDashboard = () => {
         </button>
       </aside>
 
-      {/* ================= MAIN ================= */}
+      {/*  MAIN  */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between z-50">
@@ -130,7 +190,6 @@ const HRManagerDashboard = () => {
 
           {/* Right Section */}
           <div className="flex items-center gap-6">
-            {/* Notifications */}
             <div className="relative">
               <Bell size={22} />
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
@@ -138,7 +197,6 @@ const HRManagerDashboard = () => {
               </span>
             </div>
 
-            {/* Profile */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold flex items-center justify-center">
                 HR

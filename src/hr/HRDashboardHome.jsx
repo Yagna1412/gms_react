@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 const HRDashboardHome = ({ onNavigate }) => {
-  /*SAFE NAVIGATION HANDLERS  */
+  /* SAFE NAVIGATION HANDLERS */
 
   const goToEmployees = () => {
     if (typeof onNavigate === "function") {
@@ -30,10 +30,16 @@ const HRDashboardHome = ({ onNavigate }) => {
     }
   };
 
+  const goToPerformance = () => {
+    if (typeof onNavigate === "function") {
+      onNavigate("performance");
+    }
+  };
+
   return (
     <div className="px-6 pt-20 pb-10">
 
-      {/*HEADER  */}
+      {/* HEADER */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-black">HR Dashboard</h2>
         <p className="text-gray-600">
@@ -41,7 +47,7 @@ const HRDashboardHome = ({ onNavigate }) => {
         </p>
       </div>
 
-      {/*  KPI CARDS */}
+      {/* KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
         {/* Total Employees */}
@@ -119,11 +125,16 @@ const HRDashboardHome = ({ onNavigate }) => {
         </div>
 
         {/* Performance */}
-        <div className="bg-white rounded-2xl border p-6">
+        <div
+          onClick={goToPerformance}
+          className="bg-white rounded-2xl border p-6 cursor-pointer hover:shadow-md transition"
+        >
           <TrendingUp className="text-blue-600" />
           <h1 className="mt-4 text-2xl font-bold">0</h1>
           <p className="text-gray-600">Pending Reviews</p>
-          <span className="text-green-600 text-sm font-semibold">Completed</span>
+          <span className="text-green-600 text-sm font-semibold">
+            Completed
+          </span>
         </div>
 
         {/* Training */}
@@ -141,13 +152,15 @@ const HRDashboardHome = ({ onNavigate }) => {
           <PersonStanding className="text-black" />
           <h1 className="mt-4 text-2xl font-bold">0</h1>
           <p className="text-gray-600">Relieving Employee</p>
-          <span className="text-blue-600 text-sm font-semibold">No Records</span>
+          <span className="text-blue-600 text-sm font-semibold">
+            No Records
+          </span>
         </div>
 
       </div>
 
-      {/*QUICK ACTIONS + PENDING LEAVES */}
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-6 mt-4">
+      {/* QUICK ACTIONS + PENDING LEAVES */}
+      <div className="grid grid-cols-2 gap-6 mt-4">
 
         {/* Quick Actions */}
         <div className="bg-white rounded-2xl border p-4 hover:shadow-md transition">
@@ -155,13 +168,16 @@ const HRDashboardHome = ({ onNavigate }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="border rounded-xl p-4">Process Payroll</div>
+
             <div
               onClick={goToLeaveManagement}
               className="border rounded-xl p-4 cursor-pointer hover:bg-gray-50"
             >
               Approve Leaves
             </div>
+
             <div className="border rounded-xl p-4">Create Training</div>
+
             <div
               onClick={goToEmployees}
               className="border rounded-xl p-4 cursor-pointer hover:bg-gray-50"
@@ -190,7 +206,7 @@ const HRDashboardHome = ({ onNavigate }) => {
 
       </div>
 
-      {/*HIGH PRIORITY ALERT */}
+      {/* HIGH PRIORITY ALERT */}
       <div className="mt-10 bg-red-50 border border-red-200 rounded-2xl p-6 flex gap-4">
         <AlertTriangle className="text-red-600" />
         <div>

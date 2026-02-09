@@ -1,3 +1,5 @@
+
+
 import { useState } from "react";
 import {
   CheckCircle,
@@ -6,7 +8,7 @@ import {
   Download,
 } from "lucide-react";
 
-/* INITIAL LEAVE DATA  */
+/*INITIAL LEAVE DATA  */
 const initialLeaves = [
   {
     id: 1,
@@ -32,7 +34,7 @@ const initialLeaves = [
   },
 ];
 
-/*  STATUS STYLES */
+/* STATUS STYLES  */
 const statusStyles = {
   Pending: "bg-yellow-100 text-yellow-700",
   Approved: "bg-green-100 text-green-700",
@@ -43,12 +45,12 @@ const LeaveManagement = () => {
   const [leaves, setLeaves] = useState(initialLeaves);
   const [filter, setFilter] = useState("Pending");
 
-  /*COUNTS */
+  /* COUNTS */
   const pendingCount = leaves.filter(l => l.status === "Pending").length;
   const approvedCount = leaves.filter(l => l.status === "Approved").length;
   const rejectedCount = leaves.filter(l => l.status === "Rejected").length;
 
-  /*  ACTIONS */
+  /*  ACTIONS  */
   const approveLeave = (id) => {
     setLeaves(prev =>
       prev.map(l =>
@@ -65,7 +67,7 @@ const LeaveManagement = () => {
     );
   };
 
-  /* EXPORT */
+  /*EXPORT  */
   const exportReport = () => {
     const header = "Employee,Leave Type,From,To,Days,Reason,Status\n";
     const rows = leaves
@@ -93,7 +95,7 @@ const LeaveManagement = () => {
   return (
     <div className="px-6 pt-20 pb-10">
 
-      {/* HEADER */}
+      {/*  HEADER */}
       <div className="flex justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Leave Management</h1>
@@ -111,7 +113,7 @@ const LeaveManagement = () => {
         </button>
       </div>
 
-      {/* KPI CARDS  */}
+      {/*  KPI CARDS  */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white border rounded-xl p-5">
           <Clock className="text-yellow-600" />
