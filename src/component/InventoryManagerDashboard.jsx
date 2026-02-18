@@ -1,7 +1,7 @@
-import React, { useState,useRef,useEffect } from 'react';
-import { InventoryProvider } from '../contexts/InventoryContext';
-import { Toaster } from 'sonner';
-import { 
+import React, { useState } from "react";
+import { InventoryProvider } from "../contexts/InventoryContext";
+import { Toaster } from "sonner";
+import {
   LayoutDashboard,
   Package,
   BarChart3,
@@ -10,180 +10,209 @@ import {
   FileBarChart,
   LogOut,
   Search,
-  Bell
-} from 'lucide-react';
+  Bell,
+  Menu,
+  X,
+} from "lucide-react";
 
-import StockManagement from './inventory/StockManagement';
-import InventoryItems from './inventory/InventoryItems';
-import PurchaseOrders from './inventory/PurchaseOrders';
-import VendorManagement from './inventory/VendorManagement';
-import ValuationReports from './inventory/ValuationReports';
-import InventoryDashboard from './inventory/InventoryDashboard';
-
+import InventoryDashboard from "./inventory/InventoryDashboard";
+import InventoryItems from "./inventory/InventoryItems";
+import StockManagement from "./inventory/StockManagement";
+import PurchaseOrders from "./inventory/PurchaseOrders";
+import VendorManagement from "./inventory/VendorManagement";
+import ValuationReports from "./inventory/ValuationReports";
+import InventoryErrorBoundary from "./inventory/shared/InventoryErrorBoundary";
 
 function DashboardContent1({ onLogout }) {
-    const [activeTab, setActiveTab] = useState('dashboard');
-    const [profileOpen, setProfileOpen] = useState(false);
-    const [notifications] = useState(14);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [notifications] = useState(14);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'dashboard':
-                return <InventoryDashboard onNavigate={setActiveTab} searchQuery={globalSearchQuery} />;
-            case 'items':
-                return <InventoryItems searchQuery={globalSearchQuery} />;
-            case 'stock':
-                return <StockManagement searchQuery={globalSearchQuery} />;
-            case 'purchase-orders':
-                return <PurchaseOrders searchQuery={globalSearchQuery} />;
-            case 'vendors':
-                return <VendorManagement searchQuery={globalSearchQuery} />;
-            case 'reports':
-                return <ValuationReports searchQuery={globalSearchQuery} />;
-            default:
-                return <InventoryDashboard onNavigate={setActiveTab} />;
-        }
-    };
-    const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Inventory Dashboard', color: 'blue' },
-    { id: 'items', icon: Package, label: 'Items', color: 'green' },
-    { id: 'stock', icon: BarChart3, label: 'Stock Management', color: 'purple' },
-    { id: 'purchase-orders', icon: ShoppingCart, label: 'Purchase Orders', color: 'yellow' },
-    { id: 'vendors', icon: Users, label: 'Vendors', color: 'pink' },
-    { id: 'reports', icon: FileBarChart, label: 'Valuation & Reports', color: 'cyan' }
-  ];
-
-  const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
+  const renderContent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return <InventoryDashboard onNavigate={setActiveTab} searchQuery={globalSearchQuery} />;
+      case "items":
+        return <InventoryItems searchQuery={globalSearchQuery} />;
+      case "stock":
+        return <StockManagement searchQuery={globalSearchQuery} />;
+      case "purchase-orders":
+        return <PurchaseOrders searchQuery={globalSearchQuery} />;
+      case "vendors":
+        return <VendorManagement searchQuery={globalSearchQuery} />;
+      case "reports":
+        return <ValuationReports searchQuery={globalSearchQuery} />;
+      default:
+        return <InventoryDashboard />;
     }
   };
 
+  const menuItems = [
+    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { id: "items", icon: Package, label: "Items" },
+    { id: "stock", icon: BarChart3, label: "Stock" },
+    { id: "purchase-orders", icon: ShoppingCart, label: "Orders" },
+    { id: "vendors", icon: Users, label: "Vendors" },
+    { id: "reports", icon: FileBarChart, label: "Reports" },
+  ];
+
   return (
-    <div className="flex h-screen bg-[#F8F9FA]">
-        <aside className="w-72 bg-[#EBF3FF] text-[#1E293B] border-r border-gray-200 flex flex-col">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* ================= MOBILE OVERLAY ================= */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ================= SIDEBAR ================= */}
+      <aside
+        className={`
+          fixed lg:static
+          z-50
+          w-64
+          bg-white
+          border-r
+          border-gray-200
+          h-full
+          flex flex-col
+          transform
+          transition-transform duration-300
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0
+        `}
+      >
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www/w3/org/2000/svg " className="text-white">
-                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="currentColor"/>
-                    </svg>
-                </div>
-                <div>
-                    <div className="font-bold tracking-tight">Mantha Tech</div>
-                    <div className="text-xs text-gray-500">Inventory Management</div>
-                </div>
-
-            </div>
+          <div className="font-bold text-lg">Mantha Tech</div>
+          <div className="text-xs text-gray-500">Inventory Management</div>
         </div>
-        {/*Navigation Tabs */}
-        <nav className="flex-1 p-1 space-y-1 overflow-y-auto">
-            {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                    <button
-                        key={item.id}
-                        onClick={() => setActiveTab(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all group ${
-                            isActive ? 'bg-[#2563EB] text-white' : 'text-[#1E293B] hover:bg-[#1D4ED8] hover:text-white'
-                        }`}
-                    >
-                        <Icon size={20} className={isActive ? 'text-white' : 'text-[#1E293B] group-hover:text-white'} />
-                        <span className="text-sm font-medium">{item.label}</span>
-                    </button>
-                );
-            })}
+
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition
+                ${
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+              >
+                <Icon size={18} />
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Logout */}
-    <button
-      onClick={handleLogout}
-      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-    >
-      <LogOut size={16} />
-      <span>Logout</span>
-    </button>
-        </aside>
+        <button
+          onClick={onLogout}
+          className="m-3 flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+        >
+          <LogOut size={16} />
+          Logout
+        </button>
+      </aside>
 
-        
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-8 py-1">
-                <div className="flex items-center justify-between">
-      
-                    {/* Search Bar */}
-                    <div className="flex-1 max-w-2xl">
-                        <div className="relative">
-                            <Search
-                            size={20}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            />
-                            <input
-                            type="text"
-                            value={globalSearchQuery}
-                            onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                            placeholder="Search..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                        </div>
-                    </div>
+      {/* ================= MAIN CONTENT ================= */}
+      <div className="flex-1 flex flex-col w-0">
 
-                    {/* Right Side - Notifications */}
-                    <div className="flex items-center gap-4">
-                        <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                            <Bell size={20} className="text-gray-600" />
-                            {notifications > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
-                            {notifications}
-                            </span>
-                        )}
-                        </button>
-                        {/*Profile*/}
-                        <div className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => setProfileOpen(!profileOpen)}>
-                            {/*Avatar*/}
-                            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-cyan-500 rounded-full flex items-center justify-center text-white font-semibold">IM
-                            </div>
-                            Inventory Manager
-                            {/*Profile Dropdown*/}
-                            <div className={`absolute right-0 mt-30 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 ${profileOpen ? 'block' : 'hidden'}`}>
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                >
-                                    <LogOut size={16} />
-                                    <span>Logout</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+        {/* HEADER */}
+        <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between">
 
+          {/* Left Section */}
+          <div className="flex items-center gap-3 w-full max-w-xl">
+            {/* Mobile Menu Button */}
+            <button
+              className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
+
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                value={globalSearchQuery}
+                onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center gap-4 relative">
+            <button className="relative p-2 rounded-md hover:bg-gray-100">
+              <Bell size={20} />
+              {notifications > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {notifications}
+                </span>
+              )}
+            </button>
+
+            {/* Profile */}
+            <div className="relative">
+              <div
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="cursor-pointer flex items-center gap-2"
+              >
+                <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                  IM
                 </div>
+              </div>
 
-            </header>
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg">
+                  <button
+                    onClick={onLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
 
-            {/*Main Content */}
-            <main className="flex-1 overflow-auto p-8">
-                {renderContent()}
-            </main>
+        {/* PAGE CONTENT */}
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+          <InventoryErrorBoundary>
+            {renderContent()}
+          </InventoryErrorBoundary>
+        </main>
 
-            {/* Toast Notifications */}
-            <Toaster position="top-right" richColors />
-
-        </div>
-
+        <Toaster position="top-right" richColors />
+      </div>
     </div>
   );
 }
+
 export default function InventoryManagerDashboard1({ onLogout }) {
   return (
     <InventoryProvider>
       <DashboardContent1 onLogout={onLogout} />
-      <Toaster position="top-right" richColors />
     </InventoryProvider>
   );
 }

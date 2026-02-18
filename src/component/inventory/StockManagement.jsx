@@ -17,21 +17,25 @@ import {
     Check,
     XCircle
 } from 'lucide-react';
-export default function StockManagement1() {
+
+export default function StockManagement() {
     const { items, stockMovements, addStockMovement } = useInventory();
     const [showGRNModal, setShowGRNModal] = useState(false);
     const [showIssueModal, setShowIssueModal] = useState(false);
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('All');
+    
     const [approvalRequests, setApprovalRequests] = useState(() => {
         const saved = localStorage.getItem('approvalRequests');
         return saved ? JSON.parse(saved) : [];
     });
+    
     const [showApprovalRequests, setShowApprovalRequests] = useState(() => {
         const saved = localStorage.getItem('showApprovalRequests');
         return saved ? JSON.parse(saved) : false;
     });
+    
     const [formData, setFormData] = useState({
         itemId: '',
         quantity: '',
@@ -49,6 +53,7 @@ export default function StockManagement1() {
     useEffect(() => {
         localStorage.setItem('showApprovalRequests', JSON.stringify(showApprovalRequests));
     }, [showApprovalRequests]);
+
     const resetForm = () => {
         setFormData({
             itemId: '',
@@ -192,7 +197,8 @@ export default function StockManagement1() {
         switch (type) {
             case 'Inward':
                 return 'bg-green-100 text-green-700';
-                return 'bg-red-100 text-red-700';
+            case 'Outward': 
+                return 'bg-red-100 text-red-700'; // Fixed missing case from original code
             case 'Adjustment':
                 return 'bg-yellow-100 text-yellow-700';
             default:
@@ -202,294 +208,188 @@ export default function StockManagement1() {
 
     return (
         <div className="space-y-6">
-            {/*Page Header*/}
-            <div className="flex items-center justify-between">
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Stock Management</h1>
-                    <p className="text-gray-600 mt-2">Track and manage stock movements</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Stock Management</h1>
+                    <p className="text-sm text-gray-600 mt-1">Track and manage stock movements</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto">
                     <button
                         onClick={() => {
                             resetForm();
                             setFormData({ ...formData, movementType: 'Inward' });
                             setShowGRNModal(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition"
                     >
-                        <ArrowDownCircle size={20} />
-                        GRN / Inward
+                        <ArrowDownCircle size={18} />
+                        <span className="hidden sm:inline">GRN / Inward</span>
+                        <span className="sm:hidden">Inward</span>
                     </button>
                     <button
                         onClick={() => { setShowIssueModal(true); resetForm(); setFormData({ ...formData, movementType: 'Outward' }); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition"
                     >
-                        <ArrowUpCircle size={20} />
-                        Issue Parts
+                        <ArrowUpCircle size={18} />
+                        <span className="hidden sm:inline">Issue Parts</span>
+                        <span className="sm:hidden">Outward</span>
                     </button>
                     <button
                         onClick={() => { setShowAdjustmentModal(true); resetForm(); setFormData({ ...formData, movementType: 'Adjustment' }); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-900 transition"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-yellow-600 text-white rounded-xl font-semibold hover:bg-yellow-700 transition"
                     >
-                        <RefreshCw size={20} />
+                        <RefreshCw size={18} />
                         Adjustments
                     </button>
                 </div>
             </div>
-            {/*Stock Movements Modal Components - GRN, Issue, Adjustment*/}
-            {(showGRNModal || showIssueModal || showAdjustmentModal) && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h2 className="text-xl font-semibold text-gray-900">
-                                {showGRNModal && 'Goods Receipt Note (GRN)'}
-                                {showIssueModal && 'Issue Parts'}
-                                {showAdjustmentModal && 'Stock Adjustment'}
-                            </h2>
-                            <button onClick={() => {
-                                setShowGRNModal(false);
-                                setShowIssueModal(false);
-                                setShowAdjustmentModal(false);
-                            }} className="text-gray-500 hover:text-gray-700">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="space-y-6 p-6">
-                            {/*Select Item*/}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Select Item</label>
-                                <select
-                                    value={formData.itemId}
-                                    onChange={(e) => setFormData({ ...formData, itemId: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                >
-                                    <option value="">Select an item</option>
-                                    {items.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                            {item.sku} - {item.name} (Current Stock: {item.currentStock})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            {/*Quantity*/}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                                <input
-                                    type="number"
-                                    value={formData.quantity}
-                                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Enter quantity"
-                                />
-                            </div>
-                            {/*Reference*/}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Reference</label>
-                                <input
-                                    type="text"
-                                    value={formData.reference}
-                                    onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Enter reference (e.g., PO number)"
-                                />
-                            </div>
-                            {/*Notes*/}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Notes {showAdjustmentModal && '(Reason - Mandatory)'}</label>
-                                <textarea
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder={showAdjustmentModal ? 'Enter reason for adjustment (Damage / Loss / Expiry / Correction)' : 'Additional notes (optional)'}
-                                />
-                            </div>
-                            {/*Approval Notes for Adjustments*/}
-                            {showAdjustmentModal && formData.quantity && Math.abs(parseInt(formData.quantity)) > 10 && (
-                                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                                    <div className="flex items-center gap-3">
-                                        <CheckCircle size={24} className="text-yellow-600 mt-0.5" />
-                                        <div>
-                                            <p className="text-sm font-semibold text-yellow-900">Requires Admin Approval</p>
-                                            <p className="text-xs text-yellow-700 mt-1">Adjustments over 10 units require Admin or Super Admin approval.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
-                            {/*Action Buttons*/}
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    onClick={() => {
-                                        setShowGRNModal(false);
-                                        setShowIssueModal(false);
-                                        setShowAdjustmentModal(false);
-                                        resetForm();
-                                    }}
-                                    className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleStockMovement}
-                                    className={`flex-1 px-4 py-2.5 text-white rounded-xl font-semibold transition-colors ${showGRNModal ? 'bg-green-600 hover:bg-green-700' :
-                                        showIssueModal ? 'bg-red-600 hover:bg-red-700' :
-                                            'bg-yellow-600 hover:bg-yellow-900'
-                                        }`}
-                                >
-                                    {showAdjustmentModal ? 'Send for Approval' : 'Submit'}
-                                </button>
-                            </div>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <TrendingUp size={18} className="text-blue-600" />
                         </div>
+                        <span className="text-xs sm:text-sm font-medium text-gray-600">Total</span>
                     </div>
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-900">{stockMovements.length}</div>
                 </div>
-            )}
-            {/*Statistics Cards*/}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <TrendingUp size={20} className="text-blue-600" />
+                <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <ArrowDownCircle size={18} className="text-green-600" />
                         </div>
-                        <span className="text-sm text-gray-600">Total Movements</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-600">Inwards</span>
                     </div>
-                    <div className="text-3xl font-bold text-gray-900">{stockMovements.length}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-green-700">{inwardMovements.length}</div>
                 </div>
-                <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <ArrowDownCircle size={20} className="text-green-600" />
+                <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <ArrowUpCircle size={18} className="text-red-600" />
                         </div>
-                        <span className="text-sm text-gray-600">Inwards</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-600">Outwards</span>
                     </div>
-                    <div className="text-3xl font-bold text-green-900">{inwardMovements.length}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-red-700">{outwardMovements.length}</div>
                 </div>
-                <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                            <ArrowUpCircle size={20} className="text-red-600" />
+                <div 
+                    className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 cursor-pointer hover:shadow-md hover:border-yellow-300 transition-all shadow-sm" 
+                    onClick={() => setShowApprovalRequests(!showApprovalRequests)}
+                >
+                    <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <RefreshCw size={18} className="text-yellow-600" />
                         </div>
-                        <span className="text-sm text-gray-600">Outwards</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-600">Adjustments</span>
                     </div>
-                    <div className="text-3xl font-bold text-gray-900">{outwardMovements.length}</div>
-                </div>
-                <div className="bg-white rounded-2xl p-6 border border-gray-200 cursor-pointer hover:shadow-lg hover:border-yellow-300 transition-all" onClick={() => setShowApprovalRequests(!showApprovalRequests)}>
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <RefreshCw size={20} className="text-yellow-600" />
-                        </div>
-                        <span className="text-sm text-gray-600">Adjustments</span>
-                    </div>
-                    <div className="text-3xl font-bold text-gray-900">{adjustmentMovements.length}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-yellow-700">{adjustmentMovements.length}</div>
                 </div>
             </div>
-            {/*Approval Requests Section - All Statuses*/}
+
+            {/* Approval Requests Section - All Statuses */}
             {approvalRequests.length > 0 && showApprovalRequests && (
-                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden animate-in fade-in duration-300">
-                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Clock size={20} className="text-gray-600" />
-                                <h2 className="text-lg font-semibold text-gray-900">Adjustment Approval Requests</h2>
-                                <div className="flex gap-2">
-                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg text-sm font-semibold">
-                                        Pending: {approvalRequests.filter(r => r.status === 'Pending').length}
-                                    </span>
-                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-sm font-semibold">
-                                        Approved: {approvalRequests.filter(r => r.status === 'Approved').length}
-                                    </span>
-                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded-lg text-sm font-semibold">
-                                        Rejected: {approvalRequests.filter(r => r.status === 'Rejected').length}
-                                    </span>
-                                </div>
+                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm animate-in fade-in duration-300">
+                    <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <Clock size={20} className="text-gray-600 hidden sm:block" />
+                                <h2 className="text-base sm:text-lg font-bold text-gray-900">Adjustment Requests</h2>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg text-xs font-semibold">
+                                    Pending: {approvalRequests.filter(r => r.status === 'Pending').length}
+                                </span>
+                                <span className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">
+                                    Approved: {approvalRequests.filter(r => r.status === 'Approved').length}
+                                </span>
+                                <span className="bg-red-100 text-red-700 px-2 py-1 rounded-lg text-xs font-semibold">
+                                    Rejected: {approvalRequests.filter(r => r.status === 'Rejected').length}
+                                </span>
                             </div>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
+                        <table className="w-full text-left min-w-[900px]">
+                            <thead className="bg-gray-50/50 border-b border-gray-200">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Item</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Quantity</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Reason</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Requested By</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Date & Time</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Approval Level</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Item</th>
+                                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Quantity</th>
+                                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Reason</th>
+                                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Requested By</th>
+                                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200">
+                            <tbody className="divide-y divide-gray-100">
                                 {approvalRequests.map((request) => (
-                                    <tr key={request.id} className={`hover:bg-gray-50 transition-colors ${request.status === 'Approved' ? 'bg-green-50' :
-                                        request.status === 'Rejected' ? 'bg-red-50' :
-                                            'bg-white'
-                                        }`}>
+                                    <tr key={request.id} className={`hover:bg-gray-50/80 transition-colors ${
+                                        request.status === 'Approved' ? 'bg-green-50/30' :
+                                        request.status === 'Rejected' ? 'bg-red-50/30' : 'bg-white'
+                                    }`}>
                                         <td className="px-6 py-4">
-                                            <div>
-                                                <div className="font-semibold text-gray-900">{request.itemName}</div>
-                                                <div className="text-sm text-gray-600">{request.itemSku}</div>
+                                            <div className="font-semibold text-gray-900 text-sm">{request.itemName}</div>
+                                            <div className="text-xs font-mono text-gray-500 mt-0.5">{request.itemSku}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="font-bold text-base text-gray-900">{request.quantity}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600 max-w-[200px] truncate" title={request.reason}>
+                                            {request.reason}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{request.requestedBy}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500">{request.requestedAt}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1 items-start">
+                                                {request.requiresApproval ? (
+                                                    <span className="bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                                        Needs Admin
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                                        Auto
+                                                    </span>
+                                                )}
+                                                
+                                                {request.status === 'Pending' && (
+                                                    <span className="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-semibold">Pending</span>
+                                                )}
+                                                {request.status === 'Approved' && (
+                                                    <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                                                        <Check size={12} /> Approved
+                                                    </span>
+                                                )}
+                                                {request.status === 'Rejected' && (
+                                                    <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                                                        <XCircle size={12} /> Rejected
+                                                    </span>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="font-bold text-lg text-gray-900">{request.quantity}</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">{request.reason}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{request.requestedBy}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{request.requestedAt}</td>
-                                        <td className="px-6 py-4">
-                                            {request.requiresApproval ? (
-                                                <span className="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-semibold">
-                                                    Admin Approval
-                                                </span>
-                                            ) : (
-                                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold">
-                                                    Auto-Approve
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
                                             {request.status === 'Pending' && (
-                                                <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-xs font-semibold">
-                                                    Pending
-                                                </span>
-                                            )}
-                                            {request.status === 'Approved' && (
-                                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 w-fit">
-                                                    <Check size={14} />
-                                                    Approved
-                                                </span>
-                                            )}
-                                            {request.status === 'Rejected' && (
-                                                <span className="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 w-fit">
-                                                    <XCircle size={14} />
-                                                    Rejected
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {request.status === 'Pending' && (
-                                                <div className="flex gap-2">
+                                                <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => handleApproveRequest(request.id)}
-                                                        className="flex items-center gap-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition font-semibold text-sm"
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition font-semibold text-xs"
                                                     >
-                                                        <Check size={16} />
-                                                        Approve
+                                                        <Check size={14} /> Approve
                                                     </button>
                                                     <button
                                                         onClick={() => handleRejectRequest(request.id)}
-                                                        className="flex items-center gap-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition font-semibold text-sm"
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition font-semibold text-xs"
                                                     >
-                                                        <XCircle size={16} />
-                                                        Reject
+                                                        <XCircle size={14} /> Reject
                                                     </button>
                                                 </div>
                                             )}
                                             {request.status === 'Approved' && (
-                                                <span className="text-green-700 font-semibold text-sm">✓ Recorded</span>
+                                                <span className="text-green-600 font-bold text-xs">✓ Recorded</span>
                                             )}
                                             {request.status === 'Rejected' && (
-                                                <span className="text-red-700 font-semibold text-sm">✗ Cancelled</span>
+                                                <span className="text-red-600 font-bold text-xs">✗ Cancelled</span>
                                             )}
                                         </td>
                                     </tr>
@@ -499,24 +399,26 @@ export default function StockManagement1() {
                     </div>
                 </div>
             )}
-            {/*Search and Filter Bar*/}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <div className="flex flex-wrap gap-4">
-                    <div className="flex-1 min-w-[300px]">
+
+            {/* Search and Filter Bar */}
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+                    <div className="w-full sm:flex-1">
                         <div className="relative">
-                            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search movements..."
+                                placeholder="Search by item name, SKU, or ref..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors"
                             />
                         </div>
                     </div>
-                    <select value={filterType}
+                    <select 
+                        value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full sm:w-40 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium transition-colors"
                     >
                         <option value="All">All Types</option>
                         <option value="Inward">Inward</option>
@@ -525,62 +427,186 @@ export default function StockManagement1() {
                     </select>
                     <button
                         onClick={exportToCSV}
-                        className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors flex items-center gap-2">
-                        <Download size={18} />
+                        className="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
+                        <Download size={16} />
                         Export
                     </button>
                 </div>
             </div>
-            {/*Stock Movements Table - To be implemented*/}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                <div>
-                    <table>
-                        <thead className="bg-gray-50 border-b border-gray-200">
+
+            {/* Stock Movements Table */}
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[900px]">
+                        <thead className="bg-gray-50/80 border-b border-gray-200">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Date & Time</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Item SKU</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Item Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Quantity</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Movement Type</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Reference #</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Created By</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Notes</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Item Details</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Quantity</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Reference #</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">User</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Notes</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-gray-100">
                             {filteredMovements.map((movement) => (
-                                <tr key={movement.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 text-sm text-gray-900">{movement.date}</td>
-                                    <td className="px-6 py-4 text-sm font-mono text-gray-900">{movement.itemSku}</td>
+                                <tr key={movement.id} className="hover:bg-gray-50/80 transition-colors">
+                                    <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{movement.date}</td>
                                     <td className="px-6 py-4">
-                                        <div className="font-semibold text-gray-900">{movement.itemName}</div>
+                                        <div className="font-semibold text-gray-900 text-sm">{movement.itemName}</div>
+                                        <div className="text-xs font-mono text-gray-500 mt-0.5">{movement.itemSku}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             {getMovementIcon(movement.movementType)}
-                                            <span className="font-bold text-gray-900">{movement.quantity}</span>
+                                            <span className="font-bold text-gray-900 text-base">{movement.quantity}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${getMovementBadge(movement.movementType)}`}>
+                                        <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-lg ${getMovementBadge(movement.movementType)}`}>
                                             {movement.movementType}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-mono text-blue-600">{movement.reference}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{movement.createdBy}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{movement.notes}</td>
+                                    <td className="px-6 py-4 text-sm font-mono text-gray-600">{movement.reference || '-'}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-600">{movement.createdBy || 'System'}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 max-w-[200px] truncate" title={movement.notes}>
+                                        {movement.notes || '-'}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
                 {filteredMovements.length === 0 && (
-                    <div className="text-center py-12">
-                        <TrendingUp className="mx-auto text-gray-400 mb-4" size={48} />
-                        <p className="text-gray-600">No stock movements found</p>
+                    <div className="text-center py-12 px-4">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <TrendingUp className="text-gray-400" size={32} />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">No movements found</h3>
+                        <p className="text-sm text-gray-500">Adjust your search or filters to see results.</p>
                     </div>
                 )}
             </div>
+
+            {/* Modals for GRN, Issue, Adjustment */}
+            {(showGRNModal || showIssueModal || showAdjustmentModal) && (
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
+                            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                                {showGRNModal && 'Inward / Goods Receipt'}
+                                {showIssueModal && 'Outward / Issue Parts'}
+                                {showAdjustmentModal && 'Stock Adjustment'}
+                            </h2>
+                            <button onClick={() => {
+                                setShowGRNModal(false);
+                                setShowIssueModal(false);
+                                setShowAdjustmentModal(false);
+                                resetForm();
+                            }} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto space-y-5 flex-1">
+                            {/* Select Item */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Select Item <span className="text-red-500">*</span></label>
+                                <select
+                                    value={formData.itemId}
+                                    onChange={(e) => setFormData({ ...formData, itemId: e.target.value })}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors"
+                                >
+                                    <option value="">-- Choose an item --</option>
+                                    {items.map((item) => (
+                                        <option key={item.id} value={item.id}>
+                                            {item.name} | SKU: {item.sku} (Stock: {item.currentStock})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                {/* Quantity */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Quantity <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="number"
+                                        value={formData.quantity}
+                                        onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors"
+                                        placeholder="e.g. 50"
+                                        min={showAdjustmentModal ? undefined : "1"}
+                                    />
+                                    {showAdjustmentModal && <p className="text-[11px] text-gray-500 mt-1">Use negative values to reduce stock.</p>}
+                                </div>
+                                {/* Reference */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Reference #</label>
+                                    <input
+                                        type="text"
+                                        value={formData.reference}
+                                        onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors"
+                                        placeholder="PO, Bill, or Ticket no."
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                    Notes {showAdjustmentModal && <span className="text-red-500">* (Reason)</span>}
+                                </label>
+                                <textarea
+                                    value={formData.notes}
+                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors"
+                                    placeholder={showAdjustmentModal ? 'Required: Enter reason (e.g. Damage, Expiry, Audit Correction)' : 'Optional details...'}
+                                    rows="3"
+                                />
+                            </div>
+
+                            {/* Approval Notes for Adjustments */}
+                            {showAdjustmentModal && formData.quantity && Math.abs(parseInt(formData.quantity)) > 10 && (
+                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-3 mt-2">
+                                    <CheckCircle size={20} className="text-orange-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-bold text-orange-900 leading-tight">Admin Approval Required</p>
+                                        <p className="text-xs text-orange-700 mt-1">Changes exceeding 10 units must be authorized by an administrator.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="p-5 border-t border-gray-100 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 shrink-0">
+                            <button
+                                onClick={() => {
+                                    setShowGRNModal(false);
+                                    setShowIssueModal(false);
+                                    setShowAdjustmentModal(false);
+                                    resetForm();
+                                }}
+                                className="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleStockMovement}
+                                className={`w-full sm:flex-1 px-5 py-2.5 text-white rounded-xl font-bold shadow-sm transition-colors ${
+                                    showGRNModal ? 'bg-green-600 hover:bg-green-700' :
+                                    showIssueModal ? 'bg-red-600 hover:bg-red-700' :
+                                    'bg-yellow-600 hover:bg-yellow-700'
+                                }`}
+                            >
+                                {showAdjustmentModal ? 'Submit for Approval' : 'Record Movement'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

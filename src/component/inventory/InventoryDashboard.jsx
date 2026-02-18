@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { toast } from 'sonner';
 import {
@@ -17,12 +17,10 @@ import {
   SortAsc,
   SortDesc,
   Download,
-  RefreshCw,
   CheckSquare,
   Square,
   Eye,
   EyeOff,
-  Settings,
   BarChart3,
   PieChart,
   TrendingDown,
@@ -47,11 +45,11 @@ export default function InventoryDashboard({ onNavigate }) {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [chartType, setChartType] = useState('bar');
-  const [alertThresholds, setAlertThresholds] = useState({ low: 10, critical: 0 });
-  const [autoRefresh, setAutoRefresh] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [lastUpdated] = useState(new Date());
   const [viewMode, setViewMode] = useState('grid'); // grid or list
-  const [showSettings, setShowSettings] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const pendingActionsRef = useRef(null);
+  const quickActionsRef = useRef(null);
 
   // Statistics
   const totalInventoryValue = items.reduce((sum, item) => sum + (item.currentStock * item.costPrice), 0);
@@ -112,17 +110,18 @@ export default function InventoryDashboard({ onNavigate }) {
       }
     });
 
-  // Auto-refresh functionality
   useEffect(() => {
-    let interval;
-    if (autoRefresh) {
-      interval = setInterval(() => {
-        setLastUpdated(new Date());
-        toast.info('Dashboard refreshed');
-      }, 30000); // 30 seconds
-    }
-    return () => clearInterval(interval);
-  }, [autoRefresh]);
+    const handleClickOutside = (event) => {
+      const clickedPending = pendingActionsRef.current && pendingActionsRef.current.contains(event.target);
+      const clickedQuick = quickActionsRef.current && quickActionsRef.current.contains(event.target);
+      if (!clickedPending && !clickedQuick) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Bulk operations
   const handleSelectAll = () => {
@@ -176,14 +175,6 @@ export default function InventoryDashboard({ onNavigate }) {
     { month: 'Jun', value: totalInventoryValue * 1.05 },
   ];
 
-  const stockLevelData = items.map(item => ({
-    name: item.name,
-    current: item.currentStock,
-    min: item.minLevel,
-    max: item.maxLevel,
-    percentage: Math.min((item.currentStock / item.maxLevel) * 100, 100)
-  }));
-
   // Handlers
   const handleCreatePO = (item) => {
     toast.success(`Creating PO for ${item.name}...`);
@@ -193,28 +184,60 @@ export default function InventoryDashboard({ onNavigate }) {
     toast.success(`Urgent reorder initiated for ${item.name}`);
     if (onNavigate) onNavigate('purchase-orders');
   };
+  const handleEditItem = (item) => {
+    toast.info(`Opening item details for ${item.name}`);
+    if (onNavigate) onNavigate('items');
+  };
   const handleQuickAction = (action) => {
+    setActiveDropdown(null);
     switch (action) {
-      case 'create-po': if (onNavigate) onNavigate('purchase-orders'); break;
-      case 'stock-adjustment': if (onNavigate) onNavigate('stock'); break;
-      case 'stock-audit': toast.info('Stock Audit - Coming soon'); break;
-      case 'generate-report': if (onNavigate) onNavigate('reports'); break;
+      case 'create-po':
+        toast.success('Opening Purchase Orders');
+        if (onNavigate) onNavigate('purchase-orders');
+        break;
+      case 'stock-adjustment':
+        toast.success('Opening Stock Management');
+        if (onNavigate) onNavigate('stock');
+        break;
+      case 'stock-audit':
+        toast.info('Opening reports for stock audit review');
+        if (onNavigate) onNavigate('reports');
+        break;
+      case 'generate-report':
+        toast.success('Opening Valuation & Reports');
+        if (onNavigate) onNavigate('reports');
+        break;
+      case 'import-data':
+        toast.info('Opening Items for data import');
+        if (onNavigate) onNavigate('items');
+        break;
+      case 'analytics':
+        toast.info('Opening analytics reports');
+        if (onNavigate) onNavigate('reports');
+        break;
       default: break;
     }
   };
   const handlePendingAction = (action) => {
+    setActiveDropdown(null);
     switch (action) {
-      case 'purchase-orders': if (onNavigate) onNavigate('purchase-orders'); break;
-      case 'approvals': toast.info('PO Approvals require Admin access'); break;
-      case 'invoices': toast.info('Vendor Invoices - Coming soon'); break;
-      case 'audits': toast.info('Stock Audits - Coming soon'); break;
+      case 'purchase-orders':
+        if (onNavigate) onNavigate('purchase-orders');
+        break;
+      case 'approvals':
+        toast.info('Opening pending purchase approvals');
+        if (onNavigate) onNavigate('purchase-orders');
+        break;
+      case 'invoices':
+        toast.info('Opening vendor billing view');
+        if (onNavigate) onNavigate('vendors');
+        break;
+      case 'audits':
+        toast.info('Opening stock audit reports');
+        if (onNavigate) onNavigate('reports');
+        break;
       default: break;
     }
-  };
-
-  const handleRefresh = () => {
-    setLastUpdated(new Date());
-    toast.success('Dashboard refreshed successfully');
   };
 
   const handleSort = (field) => {
@@ -241,436 +264,502 @@ export default function InventoryDashboard({ onNavigate }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[100vw] overflow-x-hidden">
       {/* Header with Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Inventory Dashboard</h1>
-          <p className="text-gray-600 mt-2">Monitor and manage your inventory • Last updated: {lastUpdated.toLocaleTimeString()}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inventory Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Monitor and manage your inventory • Last updated: {lastUpdated.toLocaleTimeString()}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <RefreshCw size={16} />
-            Refresh
-          </button>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Settings size={16} />
-            Settings
-          </button>
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 lg:flex-none" ref={pendingActionsRef}>
+            <button
+              onClick={() => setActiveDropdown(activeDropdown === 'pending' ? null : 'pending')}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors font-medium text-sm"
+            >
+              <Clock size={16} />
+              Pending Actions
+            </button>
+            {activeDropdown === 'pending' && (
+              <div className="absolute right-0 left-0 lg:left-auto mt-2 w-full lg:w-[320px] max-w-[calc(100vw-2rem)] bg-gradient-to-br from-yellow-100 via-amber-100 to-orange-100 border border-yellow-200 rounded-2xl shadow-xl z-20 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handlePendingAction('purchase-orders')}
+                    className="h-16 rounded-2xl bg-white text-amber-700 font-semibold hover:bg-yellow-50 transition-colors px-3 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart size={16} className="shrink-0" />
+                      <div className="truncate">
+                        <div className="truncate">Purchase Orders</div>
+                        <div className="text-xs text-amber-600">{pendingPOs} pending</div>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handlePendingAction('approvals')}
+                    className="h-16 rounded-2xl bg-white/70 text-amber-800 font-semibold hover:bg-white/90 transition-colors px-3 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText size={16} className="shrink-0" />
+                      <div className="truncate">
+                        <div className="truncate">PO Approvals</div>
+                        <div className="text-xs text-amber-700">{pendingApprovals} pending</div>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handlePendingAction('invoices')}
+                    className="h-16 rounded-2xl bg-white/70 text-amber-800 font-semibold hover:bg-white/90 transition-colors px-3 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="shrink-0" />
+                      <div className="truncate">
+                        <div className="truncate">Vendor Invoices</div>
+                        <div className="text-xs text-amber-700">3 pending</div>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handlePendingAction('audits')}
+                    className="h-16 rounded-2xl bg-white/70 text-amber-800 font-semibold hover:bg-white/90 transition-colors px-3 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ClipboardCheck size={16} className="shrink-0" />
+                      <div className="truncate">
+                        <div className="truncate">Stock Audits</div>
+                        <div className="text-xs text-amber-700">1 due</div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative flex-1 lg:flex-none" ref={quickActionsRef}>
+            <button
+              onClick={() => setActiveDropdown(activeDropdown === 'quick' ? null : 'quick')}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              <Zap size={16} />
+              Quick Actions
+            </button>
+            {activeDropdown === 'quick' && (
+              <div className="absolute right-0 left-0 lg:left-auto mt-2 w-full lg:w-[320px] max-w-[calc(100vw-2rem)] bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl z-20 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleQuickAction('create-po')}
+                    className="h-16 rounded-2xl bg-white text-blue-600 font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart size={16} />
+                    Create PO
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('stock-adjustment')}
+                    className="h-16 rounded-2xl bg-white/20 text-white font-semibold hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <TrendingUp size={16} />
+                    Stock Adjustment
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('stock-audit')}
+                    className="h-16 rounded-2xl bg-white/20 text-white font-semibold hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ClipboardCheck size={16} />
+                    Stock Audit
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('generate-report')}
+                    className="h-16 rounded-2xl bg-white/20 text-white font-semibold hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FileText size={16} />
+                    Reports
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('import-data')}
+                    className="h-16 rounded-2xl bg-white/20 text-white font-semibold hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    Import Data
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('analytics')}
+                    className="h-16 rounded-2xl bg-white/20 text-white font-semibold hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <BarChart3 size={16} />
+                    Analytics
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Dashboard Settings</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Low Stock Alert Threshold</label>
-              <input
-                type="number"
-                value={alertThresholds.low}
-                onChange={(e) => setAlertThresholds(prev => ({ ...prev, low: parseInt(e.target.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Critical Stock Alert Threshold</label>
-              <input
-                type="number"
-                value={alertThresholds.critical}
-                onChange={(e) => setAlertThresholds(prev => ({ ...prev, critical: parseInt(e.target.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex items-center">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={autoRefresh}
-                  onChange={(e) => setAutoRefresh(e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-sm font-medium text-gray-700">Auto-refresh (30s)</span>
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
               <DollarSign className="text-blue-600" size={24} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">₹{(totalInventoryValue / 1000).toFixed(1)}K</div>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-900">₹{(totalInventoryValue / 1000).toFixed(1)}K</div>
           <div className="text-sm text-gray-600 mt-1">Total Inventory Value</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
               <Package className="text-green-600" size={24} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">{totalActiveItems}</div>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-900">{totalActiveItems}</div>
           <div className="text-sm text-gray-600 mt-1">Total Active Items</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
             <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
               <AlertTriangle className="text-yellow-600" size={24} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">{lowStockItems.length}</div>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-900">{lowStockItems.length}</div>
           <div className="text-sm text-gray-600 mt-1">Low Stock Alerts</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
               <XCircle className="text-red-600" size={24} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">{outOfStockItems.length}</div>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-900">{outOfStockItems.length}</div>
           <div className="text-sm text-gray-600 mt-1">Out of Stock Items</div>
         </div>
       </div>
 
-
       {/* Enhanced Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Inventory Value by Category */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">Inventory Value by Category</h2>
-            <div className="flex gap-2">
+            <h2 className="text-lg font-bold text-gray-900">Value by Category</h2>
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setChartType('bar')}
-                className={`p-2 rounded ${chartType === 'bar' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
+                className={`p-1.5 rounded-md transition-colors ${chartType === 'bar' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 <BarChart3 size={16} />
               </button>
               <button
                 onClick={() => setChartType('pie')}
-                className={`p-2 rounded ${chartType === 'pie' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
+                className={`p-1.5 rounded-md transition-colors ${chartType === 'pie' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 <PieChart size={16} />
               </button>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={250}>
-            {chartType === 'bar' ? (
-              <BarChart data={inventoryByCategory}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
-                <YAxis />
-                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-                <Bar dataKey="value" fill="#3B82F6" />
-              </BarChart>
-            ) : (
-              <RechartsPieChart>
-                <Pie
-                  data={inventoryByCategory}
-                  dataKey="value"
-                  nameKey="category"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {inventoryByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-              </RechartsPieChart>
-            )}
-          </ResponsiveContainer>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              {chartType === 'bar' ? (
+                <BarChart data={inventoryByCategory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis dataKey="category" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(val) => `₹${val / 1000}k`} tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              ) : (
+                <RechartsPieChart>
+                  <Pie
+                    data={inventoryByCategory}
+                    dataKey="value"
+                    nameKey="category"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                  >
+                    {inventoryByCategory.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                </RechartsPieChart>
+              )}
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Stock Status Distribution */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Stock Status Distribution</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <RechartsPieChart>
-              <Pie
-                data={stockStatusData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={80}
-                label
-              >
-                {stockStatusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={36} />
-            </RechartsPieChart>
-          </ResponsiveContainer>
+        <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 lg:col-span-1">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Status Distribution</h2>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsPieChart>
+                <Pie
+                  data={stockStatusData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  label={({ name, percent }) => percent > 0 ? `${(percent * 100).toFixed(0)}%` : ''}
+                  labelLine={false}
+                >
+                  {stockStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+              </RechartsPieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Inventory Trends */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Inventory Value Trends</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={inventoryTrendsData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-              <Area type="monotone" dataKey="value" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 lg:col-span-1">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Value Trends</h2>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={inventoryTrendsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(val) => `₹${val / 1000}k`} tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Area type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
       {/* Enhanced Inventory Items Management */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-          <h2 className="text-lg font-bold text-gray-900">Inventory Items ({filteredAndSortedItems.length})</h2>
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col">
+        {/* Header and Controls */}
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Inventory Items</h2>
+            <div className="flex flex-wrap items-center gap-2">
+               {selectedItems.length > 0 && (
+                <>
+                  <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{selectedItems.length} Selected</span>
+                  <button onClick={handleBulkReorder} className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+                    Bulk Reorder
+                  </button>
+                  <button onClick={handleBulkExport} className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition" title="Export Selected">
+                    <Download size={18} />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-3">
+             <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Search items by name or SKU..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                />
+             </div>
+             <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center justify-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium transition ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
+                <Filter size={16} /> Filters
+             </button>
+          </div>
 
-          {/* Bulk Actions */}
-          {selectedItems.length > 0 && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">{selectedItems.length} selected</span>
-              <button
-                onClick={handleBulkReorder}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Bulk Reorder
-              </button>
-              <button
-                onClick={handleBulkExport}
-                className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Download size={16} className="inline mr-2" />
-                Export Selected
-              </button>
+          {showFilters && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 animate-in fade-in slide-in-from-top-2">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Category</label>
+                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                  <option value="all">All Categories</option>
+                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Status</label>
+                <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                  <option value="all">All Statuses</option>
+                  {statuses.map(stat => <option key={stat} value={stat}>{stat}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Sort By</label>
+                <div className="flex gap-2">
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <option value="name">Name</option>
+                    <option value="stock">Stock Level</option>
+                    <option value="value">Total Value</option>
+                  </select>
+                  <button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">
+                    {sortOrder === 'asc' ? <SortAsc size={18} /> : <SortDesc size={18} />}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search items by name, SKU, or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Filter size={16} />
-            Filters
-            {showFilters ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
-
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Categories</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Statuses</option>
-                {statuses.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="name">Name</option>
-                <option value="sku">SKU</option>
-                <option value="stock">Stock Level</option>
-                <option value="price">Price</option>
-                <option value="value">Total Value</option>
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <button
-                onClick={() => handleSort(sortBy)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
-                {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Items List with Enhanced Features */}
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {/* Header with Select All */}
-          <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg font-semibold text-gray-700">
-            <button onClick={handleSelectAll} className="text-gray-600 hover:text-gray-800">
-              {selectedItems.length === filteredAndSortedItems.length && filteredAndSortedItems.length > 0 ?
-                <CheckSquare size={20} /> : <Square size={20} />}
+        {/* Responsive Items List */}
+        <div className="flex-1 overflow-y-auto max-h-[500px] p-4 sm:p-6 bg-gray-50/50">
+          {/* Desktop Header */}
+          <div className="hidden md:flex items-center gap-4 p-3 bg-gray-100 rounded-lg font-semibold text-gray-600 text-xs uppercase tracking-wider mb-3">
+            <button onClick={handleSelectAll} className="w-5 flex justify-center text-gray-500 hover:text-gray-800">
+              {selectedItems.length === filteredAndSortedItems.length && filteredAndSortedItems.length > 0 ? <CheckSquare size={18} /> : <Square size={18} />}
             </button>
-            <span className="flex-1">Item Details</span>
-            <span className="w-24 text-center">Stock Level</span>
-            <span className="w-20 text-center">Status</span>
-            <span className="w-24 text-right">Value</span>
-            <span className="w-32 text-center">Actions</span>
+            <div className="flex-1">Item Details</div>
+            <div className="w-32 text-center">Stock Level</div>
+            <div className="w-24 text-center">Status</div>
+            <div className="w-28 text-right">Value</div>
+            <div className="w-32 text-center">Actions</div>
           </div>
 
-          {filteredAndSortedItems.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-              <button
-                onClick={() => handleSelectItem(item.id)}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                {selectedItems.includes(item.id) ? <CheckSquare size={20} /> : <Square size={20} />}
-              </button>
+          <div className="space-y-3">
+            {filteredAndSortedItems.map((item) => (
+              <div key={item.id} className="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
+                
+                {/* Mobile Top / Desktop Left - Info */}
+                <div className="flex items-start md:items-center gap-3 w-full md:w-auto md:flex-1">
+                  <button onClick={() => handleSelectItem(item.id)} className="mt-1 md:mt-0 text-gray-400 hover:text-blue-600 shrink-0">
+                    {selectedItems.includes(item.id) ? <CheckSquare size={20} className="text-blue-600" /> : <Square size={20} />}
+                  </button>
+                  <img src={item.image} alt={item.name} className="w-14 h-14 md:w-12 md:h-12 rounded-lg object-cover shrink-0 border border-gray-100" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-gray-900 text-sm md:text-base truncate pr-2">{item.name}</div>
+                    <div className="text-xs text-gray-500 truncate mt-0.5">{item.sku} • {item.category}</div>
+                  </div>
+                  {/* Mobile-only status badge */}
+                  <div className="md:hidden shrink-0 ml-auto">
+                     <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStockStatusColor(item).replace('bg-', 'text-').replace('500', '700')} ${getStockStatusColor(item).replace('500', '100')}`}>
+                        {getStockStatusText(item)}
+                     </span>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-3 flex-1">
-                <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900">{item.name}</div>
-                  <div className="text-xs text-gray-600">{item.sku} • {item.category}</div>
+                {/* Mobile Bottom Grid / Desktop Right Columns */}
+                <div className="grid grid-cols-2 md:flex md:items-center gap-4 md:gap-4 w-full md:w-auto pt-3 md:pt-0 border-t md:border-none border-gray-100">
+                  
+                  {/* Stock */}
+                  <div className="md:w-32 flex flex-col justify-center">
+                    <div className="text-sm font-bold text-gray-900 flex justify-between md:block">
+                      <span className="md:hidden text-gray-500 font-medium text-xs uppercase">Stock:</span>
+                      <span className="md:text-center block">{item.currentStock}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1.5">
+                      <div className={`h-1.5 rounded-full ${getStockStatusColor(item)}`} style={{ width: `${Math.min((item.currentStock / item.maxLevel) * 100, 100)}%` }} />
+                    </div>
+                  </div>
+
+                  {/* Desktop Status */}
+                  <div className="hidden md:flex md:w-24 justify-center">
+                    <span className={`inline-block px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${getStockStatusColor(item).replace('bg-', 'text-').replace('500', '700')} ${getStockStatusColor(item).replace('500', '100')}`}>
+                      {getStockStatusText(item)}
+                    </span>
+                  </div>
+
+                  {/* Value */}
+                  <div className="md:w-28 flex flex-col justify-center text-right">
+                    <div className="text-sm font-bold text-gray-900 flex justify-between md:block">
+                      <span className="md:hidden text-gray-500 font-medium text-xs uppercase">Value:</span>
+                      <span>₹{(item.currentStock * item.costPrice).toLocaleString()}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 hidden md:block mt-0.5">₹{item.costPrice}/unit</div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="col-span-2 md:col-span-1 md:w-32 flex gap-2 mt-1 md:mt-0">
+                    <button onClick={() => handleCreatePO(item)} className="flex-1 px-3 py-2 md:py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors">
+                      Reorder
+                    </button>
+                    <button onClick={() => handleEditItem(item)} className="flex-1 px-3 py-2 md:py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors">
+                      Edit
+                    </button>
+                  </div>
+
                 </div>
               </div>
-
-              <div className="w-24">
-                <div className="text-sm font-semibold text-gray-900">{item.currentStock}</div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                  <div
-                    className={`h-2 rounded-full ${getStockStatusColor(item)}`}
-                    style={{ width: `${Math.min((item.currentStock / item.maxLevel) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">Min: {item.minLevel}</div>
+            ))}
+            {filteredAndSortedItems.length === 0 && (
+              <div className="text-center py-12 px-4 border-2 border-dashed border-gray-200 rounded-2xl bg-white">
+                <Package className="mx-auto text-gray-300 mb-3" size={40} />
+                <h3 className="text-base font-bold text-gray-900">No items found</h3>
+                <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters.</p>
               </div>
-
-              <div className="w-20 text-center">
-                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${item.currentStock === 0 ? 'bg-red-100 text-red-700' :
-                  item.currentStock <= item.minLevel ? 'bg-yellow-100 text-yellow-700' :
-                    item.currentStock > item.maxLevel ? 'bg-orange-100 text-orange-700' :
-                      'bg-green-100 text-green-700'
-                  }`}>
-                  {item.currentStock === 0 ? <XCircle size={12} /> :
-                    item.currentStock <= item.minLevel ? <AlertTriangle size={12} /> :
-                      item.currentStock > item.maxLevel ? <TrendingUp size={12} /> :
-                        <CheckCircle size={12} />}
-                  {getStockStatusText(item)}
-                </span>
-              </div>
-
-              <div className="w-24 text-right">
-                <div className="text-sm font-semibold text-gray-900">₹{(item.currentStock * item.costPrice).toLocaleString()}</div>
-                <div className="text-xs text-gray-600">₹{item.costPrice}</div>
-              </div>
-
-              <div className="w-32 flex gap-2">
-                <button
-                  className="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors"
-                  onClick={() => handleCreatePO(item)}
-                >
-                  Reorder
-                </button>
-                <button className="px-3 py-1 bg-gray-600 text-white text-xs font-semibold rounded hover:bg-gray-700 transition-colors">
-                  Edit
-                </button>
-              </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Stock Status & Low / Out of Stock Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Low Stock */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Low Stock Alerts</h2>
-              <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-lg">{lowStockItems.length} Items</span>
+          {/* Low Stock Container */}
+          <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                 <AlertTriangle size={20} className="text-yellow-500" /> Low Stock Alerts
+              </h2>
+              <span className="px-3 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 text-xs font-bold rounded-full">{lowStockItems.length} Items</span>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {lowStockItems.slice(0, 4).map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                <div key={item.id} className="flex flex-col justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl hover:shadow-md transition-shadow gap-4">
+                  <div className="flex items-start gap-3">
+                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-white border border-gray-200" />
                     <div>
-                      <div className="font-semibold text-gray-900">{item.name}</div>
-                      <div className="text-xs text-gray-600">{item.sku}</div>
+                      <div className="font-bold text-gray-900 text-sm leading-tight">{item.name}</div>
+                      <div className="text-xs text-gray-500 mt-1 font-mono">{item.sku}</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">{item.currentStock} / {item.minLevel}</div>
-                    <div className="text-xs text-yellow-600">Reorder: {item.reorderPoint}</div>
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                    <div>
+                      <div className="text-sm font-black text-red-600">{item.currentStock} <span className="text-xs font-medium text-gray-500">/ {item.minLevel} min</span></div>
+                    </div>
+                    <button className="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm" onClick={() => handleCreatePO(item)}>
+                      Order Now
+                    </button>
                   </div>
-                  <button className="ml-4 px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors" onClick={() => handleCreatePO(item)}>Create PO</button>
                 </div>
               ))}
             </div>
+            {lowStockItems.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No low stock items currently.</p>}
           </div>
 
-          {/* Out of Stock */}
+          {/* Out of Stock Container */}
           {outOfStockItems.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 border border-red-200">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-gray-900">Out of Stock - Critical</h2>
-                <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-lg">{outOfStockItems.length} Items</span>
+            <div className="bg-red-50 rounded-2xl p-4 sm:p-6 border border-red-100">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-bold text-red-900 flex items-center gap-2">
+                  <XCircle size={20} className="text-red-500" /> Critical: Out of Stock
+                </h2>
+                <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">{outOfStockItems.length} Items</span>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {outOfStockItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-red-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                  <div key={item.id} className="flex flex-col justify-between p-4 bg-white border border-red-100 rounded-xl shadow-sm gap-4">
+                    <div className="flex items-start gap-3">
+                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
                       <div>
-                        <div className="font-semibold text-gray-900">{item.name}</div>
-                        <div className="text-xs text-gray-600">{item.sku}</div>
+                        <div className="font-bold text-gray-900 text-sm leading-tight">{item.name}</div>
+                        <div className="text-xs text-gray-500 mt-1 font-mono">{item.sku}</div>
                       </div>
                     </div>
-                    <button className="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors" onClick={() => handleUrgentReorder(item)}>Urgent Reorder</button>
+                    <button className="w-full py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors shadow-sm" onClick={() => handleUrgentReorder(item)}>
+                      Urgent Reorder
+                    </button>
                   </div>
                 ))}
               </div>
@@ -678,147 +767,53 @@ export default function InventoryDashboard({ onNavigate }) {
           )}
         </div>
 
-        {/* Right Column - Performance & Quick Actions */}
+        {/* Right Column - Performance & Actions */}
         <div className="space-y-6">
           {/* Performance Metrics */}
           <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Performance Metrics</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900 mb-5">Performance Metrics</h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-white border border-green-100 rounded-lg flex items-center justify-center shadow-sm">
                     <TrendingUpIcon className="text-green-600" size={18} />
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900">Stock Accuracy</div>
-                    <div className="text-xs text-gray-600">Last 30 days</div>
+                    <div className="font-bold text-sm text-gray-900">Stock Accuracy</div>
+                    <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mt-0.5">Last 30 days</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-green-600">98.5%</div>
-                </div>
+                <div className="text-lg font-black text-green-600">98.5%</div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-white border border-blue-100 rounded-lg flex items-center justify-center shadow-sm">
                     <Clock className="text-blue-600" size={18} />
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900">Avg. Reorder Time</div>
-                    <div className="text-xs text-gray-600">This month</div>
+                    <div className="font-bold text-sm text-gray-900">Reorder Time</div>
+                    <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mt-0.5">This month</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-blue-600">2.3 days</div>
-                </div>
+                <div className="text-lg font-black text-blue-600">2.3d</div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-white border border-purple-100 rounded-lg flex items-center justify-center shadow-sm">
                     <Zap className="text-purple-600" size={18} />
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900">Turnover Ratio</div>
-                    <div className="text-xs text-gray-600">Annual</div>
+                    <div className="font-bold text-sm text-gray-900">Turnover Ratio</div>
+                    <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mt-0.5">Annualized</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-purple-600">4.2x</div>
-                </div>
+                <div className="text-lg font-black text-purple-600">4.2x</div>
               </div>
             </div>
           </div>
 
-          {/* Pending Actions */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Actions</h2>
-            <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors text-left" onClick={() => handlePendingAction('purchase-orders')}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <ShoppingCart className="text-blue-600" size={18} />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">Purchase Orders</div>
-                    <div className="text-xs text-gray-600">{pendingPOs} pending</div>
-                  </div>
-                </div>
-                <ArrowRight className="text-blue-600" size={20} />
-              </button>
-
-              <button className="w-full flex items-center justify-between p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-colors text-left" onClick={() => handlePendingAction('approvals')}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <FileText className="text-yellow-600" size={18} />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">PO Approvals</div>
-                    <div className="text-xs text-gray-600">{pendingApprovals} pending</div>
-                  </div>
-                </div>
-                <ArrowRight className="text-yellow-600" size={20} />
-              </button>
-
-              <button className="w-full flex items-center justify-between p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors text-left" onClick={() => handlePendingAction('invoices')}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Users className="text-purple-600" size={18} />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">Vendor Invoices</div>
-                    <div className="text-xs text-gray-600">3 pending</div>
-                  </div>
-                </div>
-                <ArrowRight className="text-purple-600" size={20} />
-              </button>
-
-              <button className="w-full flex items-center justify-between p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors text-left" onClick={() => handlePendingAction('audits')}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <ClipboardCheck className="text-green-600" size={18} />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">Stock Audits</div>
-                    <div className="text-xs text-gray-600">1 due</div>
-                  </div>
-                </div>
-                <ArrowRight className="text-green-600" size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Enhanced Quick Actions */}
-          <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-6 text-blue">
-            <h2 className="text-lg font-bold mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="w-full px-4 py-3 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors text-sm" onClick={() => handleQuickAction('create-po')}>
-                <ShoppingCart className="inline mr-2" size={16} />
-                Create PO
-              </button>
-              <button className="w-full px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors text-sm" onClick={() => handleQuickAction('stock-adjustment')}>
-                <TrendingUp className="inline mr-2" size={16} />
-                Stock Adjust
-              </button>
-              <button className="w-full px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors text-sm" onClick={() => handleQuickAction('stock-audit')}>
-                <ClipboardCheck className="inline mr-2" size={16} />
-                Stock Audit
-              </button>
-              <button className="w-full px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors text-sm" onClick={() => handleQuickAction('generate-report')}>
-                <FileText className="inline mr-2" size={16} />
-                Reports
-              </button>
-              <button className="w-full px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors text-sm" onClick={() => toast.info('Bulk import coming soon')}>
-                <Download className="inline mr-2" size={16} />
-                Import Data
-              </button>
-              <button className="w-full px-4 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors text-sm" onClick={() => toast.info('Analytics dashboard coming soon')}>
-                <BarChart3 className="inline mr-2" size={16} />
-                Analytics
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
