@@ -1,141 +1,166 @@
-import React, { useState } from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import { toast } from 'sonner';
-import { FileText, Plus, Eye, Send, AlertCircle, X } from 'lucide-react';
+import React, { useState } from "react";
+import { useServiceAdvisor } from "../context/Serviceadvisorcontext";
+import { toast } from "sonner";
+import { Plus, Eye, Send, AlertCircle } from "lucide-react";
 
 export default function ServiceEstimation() {
-  const { estimations, addEstimation, updateEstimation, jobCards, customers } = useServiceAdvisor();
+  const { estimations, addEstimation, updateEstimation, jobCards, customers } =
+    useServiceAdvisor();
+
   const [showModal, setShowModal] = useState(false);
+  const [viewEstimation, setViewEstimation] = useState(null);
+
   const [formData, setFormData] = useState({
-    jobCardId: '',
-    customerId: '',
-    customerName: '',
-    services: [],
-    parts: [],
+    jobCardId: "",
+    customerId: "",
+    customerName: "",
     laborCharges: 0,
-    discount: 0
+    discount: 0,
   });
-  
+
+  /* ---------------- ACTION HANDLERS ---------------- */
+
   const handleApprove = (id) => {
-    updateEstimation(id, { status: 'Approved' });
-    toast.success('Estimation approved by customer (OTP verified)');
+    updateEstimation(id, { status: "Approved" });
+    toast.success("Estimation approved");
   };
 
   const handleSend = (est) => {
-    toast.success(`Estimation sent to ${est.customerName} via WhatsApp & Email`);
+    toast.success(`Estimation sent to ${est.customerName}`);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.jobCardId || !formData.customerId) {
-      toast.error('Please select job card and customer');
+      toast.error("Please select job card and customer");
       return;
     }
 
-
-    const servicesTotal = formData.services.reduce((sum, s) => sum + (s.price * s.qty), 0);
-    const partsTotal = formData.parts.reduce((sum, p) => sum + (p.price * p.qty), 0);
-    const subtotal = servicesTotal + partsTotal + parseFloat(formData.laborCharges || 0);
-    const discountAmount = (subtotal * parseFloat(formData.discount || 0)) / 100;
+    const subtotal = 3000 + 1000 + Number(formData.laborCharges || 0);
+    const discountAmount = (subtotal * Number(formData.discount || 0)) / 100;
     const afterDiscount = subtotal - discountAmount;
     const tax = (afterDiscount * 18) / 100;
-    const totalAmount = afterDiscount + tax;
 
-    const estimationData = {
+    addEstimation({
       ...formData,
-      services: [{ name: 'General Service', price: 3000, qty: 1 }],
-      parts: [{ name: 'Engine Oil', price: 500, qty: 2, stock: 20 }],
-      laborCharges: parseFloat(formData.laborCharges) || 1000,
-      discount: parseFloat(formData.discount) || 0,
-      discountApproved: parseFloat(formData.discount) <= 15,
+      services: [{ name: "General Service", price: 3000, qty: 1 }],
+      parts: [{ name: "Engine Oil", price: 500, qty: 2 }],
+      laborCharges: Number(formData.laborCharges) || 1000,
+      discount: Number(formData.discount) || 0,
+      discountApproved: Number(formData.discount) <= 15,
       tax: 18,
-      totalAmount: totalAmount
-    };
+      totalAmount: afterDiscount + tax,
+      status: "Pending",
+    });
 
-    addEstimation(estimationData);
-    
-    if (parseFloat(formData.discount) > 15) {
-      toast.warning('Estimation created! Discount > 15% requires Admin approval.');
-    } else {
-      toast.success('Estimation created successfully! Valid for 7 days.');
-    }
-    
+    toast.success("Estimation created successfully");
     setShowModal(false);
-    setFormData({ jobCardId: '', customerId: '', customerName: '', services: [], parts: [], laborCharges: 0, discount: 0 });
+    setFormData({
+      jobCardId: "",
+      customerId: "",
+      customerName: "",
+      laborCharges: 0,
+      discount: 0,
+    });
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-bold text-black mb-2">Service Estimation</h1>
-          <p className="text-gray-600 text-sm">Create and manage service estimates</p>
+          <h1 className="text-xl font-bold text-black">Service Estimation</h1>
+          <p className="text-sm text-gray-600">
+            Create and manage service estimates
+          </p>
         </div>
-        <button className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#2563EB]-900 transition-colors font-semibold" onClick={() => setShowModal(true)}>
-          <Plus className="w-5 h-5" />
+
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          <Plus className="w-4 h-4" />
           New Estimation
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">Pending</span>
-          <div className="text-3xl font-bold text-black mt-2">{estimations.filter(e => e.status === 'Pending').length}</div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">Approved</span>
-          <div className="text-3xl font-bold text-black mt-2">{estimations.filter(e => e.status === 'Approved').length}</div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">Total Value</span>
-          <div className="text-3xl font-bold text-black mt-2">₹{(estimations.reduce((sum, e) => sum + e.totalAmount, 0) / 1000).toFixed(0)}K</div>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <StatCard
+          label="Pending"
+          value={estimations.filter((e) => e.status === "Pending").length}
+        />
+        <StatCard
+          label="Approved"
+          value={estimations.filter((e) => e.status === "Approved").length}
+        />
+        <StatCard
+          label="Total Value"
+          value={`₹${(
+            estimations.reduce((s, e) => s + e.totalAmount, 0) / 1000
+          ).toFixed(0)}K`}
+        />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+      {/* Table */}
+      <div className="bg-white rounded-xl border overflow-x-auto">
+        <table className="min-w-[900px] w-full text-sm">
+          <thead className="bg-gray-50 text-gray-600">
             <tr>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Estimation ID</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Customer</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Job Card</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Amount</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Discount</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Status</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Valid Till</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left">Estimation ID</th>
+              <th className="px-4 py-3 text-left">Customer</th>
+              <th className="px-4 py-3 text-left">Job Card</th>
+              <th className="px-4 py-3 text-left">Amount</th>
+              <th className="px-4 py-3 text-left">Discount</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+
+          <tbody>
             {estimations.map((est) => (
-              <tr key={est.id} className="hover:bg-gray-50">
-                <td className="py-4 px-6"><span className="text-sm font-mono text-black">{est.id}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{est.customerName}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{est.jobCardId}</span></td>
-                <td className="py-4 px-6"><span className="text-sm font-semibold text-black">₹{est.totalAmount.toLocaleString()}</span></td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">{est.discount}%</span>
-                    {est.discount > 15 && !est.discountApproved && (
-                      <AlertCircle className="w-4 h-4 text-orange-500" title="Needs Admin Approval" />
-                    )}
-                  </div>
+              <tr key={est.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-mono">{est.id}</td>
+                <td className="px-4 py-3">{est.customerName}</td>
+                <td className="px-4 py-3">{est.jobCardId}</td>
+                <td className="px-4 py-3 font-semibold">
+                  ₹{est.totalAmount.toLocaleString()}
                 </td>
-                <td className="py-4 px-6">
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                    est.status === 'Approved' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
-                  }`}>
+                <td className="px-4 py-3 flex items-center gap-1">
+                  {est.discount}%
+                  {est.discount > 15 && !est.discountApproved && (
+                    <AlertCircle className="w-4 h-4 text-orange-500" />
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      est.status === "Approved"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
                     {est.status}
                   </span>
                 </td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{est.validTill}</span></td>
-                <td className="py-4 px-6">
+                <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button className="p-1.5 hover:bg-gray-100 rounded"><Eye className="w-4 h-4 text-gray-600" /></button>
-                    <button onClick={() => handleSend(est)} className="p-1.5 hover:bg-gray-100 rounded"><Send className="w-4 h-4 text-blue-600" /></button>
-                    {est.status === 'Pending' && (
-                      <button onClick={() => handleApprove(est.id)} className="text-xs text-green-600 hover:text-green-700 font-medium">Approve</button>
+                    <IconBtn
+                      icon={<Eye className="w-4 h-4" />}
+                      onClick={() => setViewEstimation(est)}
+                    />
+                    <IconBtn
+                      icon={<Send className="w-4 h-4" />}
+                      onClick={() => handleSend(est)}
+                    />
+                    {est.status === "Pending" && (
+                      <button
+                        onClick={() => handleApprove(est.id)}
+                        className="text-xs text-green-600 font-semibold"
+                      >
+                        Approve
+                      </button>
                     )}
                   </div>
                 </td>
@@ -145,72 +170,150 @@ export default function ServiceEstimation() {
         </table>
       </div>
 
-     
+      {/* CREATE MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-black">Create New Estimation</h2>
-              <button className="p-1.5 hover:bg-gray-100 rounded" onClick={() => setShowModal(false)}>
-                <X className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Job Card</label>
-                <select
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={formData.jobCardId}
-                  onChange={(e) => setFormData({ ...formData, jobCardId: e.target.value })}
-                >
-                  <option value="">Select Job Card</option>
-                  {jobCards.map((jobCard) => (
-                    <option key={jobCard.id} value={jobCard.id}>{jobCard.id}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Customer</label>
-                <select
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={formData.customerId}
-                  onChange={(e) => {
-                    const customer = customers.find(c => c.id === e.target.value);
-                    setFormData({ ...formData, customerId: e.target.value, customerName: customer ? customer.name : '' });
-                  }}
-                >
-                  <option value="">Select Customer</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>{customer.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Labor Charges</label>
-                <input
-                  type="number"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={formData.laborCharges}
-                  onChange={(e) => setFormData({ ...formData, laborCharges: e.target.value })}
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Discount (%)</label>
-                <input
-                  type="number"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={formData.discount}
-                  onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
-                />
-              </div>
-              <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#2563EB]-900 transition-colors font-semibold">
-                <Plus className="w-5 h-5" />
-                Create Estimation
-              </button>
-            </form>
+        <Modal title="New Estimation">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <SelectField
+              label="Job Card"
+              value={formData.jobCardId}
+              onChange={(e) =>
+                setFormData({ ...formData, jobCardId: e.target.value })
+              }
+              options={jobCards.map((j) => ({ value: j.id, label: j.id }))}
+            />
+
+            <SelectField
+              label="Customer"
+              value={formData.customerId}
+              onChange={(e) => {
+                const c = customers.find((x) => x.id === e.target.value);
+                setFormData({
+                  ...formData,
+                  customerId: e.target.value,
+                  customerName: c?.name || "",
+                });
+              }}
+              options={customers.map((c) => ({
+                value: c.id,
+                label: c.name,
+              }))}
+            />
+
+            <InputField
+              label="Labor Charges"
+              type="number"
+              value={formData.laborCharges}
+              onChange={(e) =>
+                setFormData({ ...formData, laborCharges: e.target.value })
+              }
+            />
+
+            <InputField
+              label="Discount (%)"
+              type="number"
+              value={formData.discount}
+              onChange={(e) =>
+                setFormData({ ...formData, discount: e.target.value })
+              }
+            />
+
+            <button
+              type="submit"
+              className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+            >
+              Create Estimation
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="w-full py-2 border rounded-lg text-gray-700"
+            >
+              Close
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {/* VIEW MODAL */}
+      {viewEstimation && (
+        <Modal title="Estimation Details">
+          <div className="space-y-2 text-sm">
+            <p><b>ID:</b> {viewEstimation.id}</p>
+            <p><b>Customer:</b> {viewEstimation.customerName}</p>
+            <p><b>Job Card:</b> {viewEstimation.jobCardId}</p>
+            <p><b>Total:</b> ₹{viewEstimation.totalAmount.toLocaleString()}</p>
+            <p><b>Discount:</b> {viewEstimation.discount}%</p>
+            <p><b>Status:</b> {viewEstimation.status}</p>
+
+            <button
+              onClick={() => setViewEstimation(null)}
+              className="mt-4 w-full py-2 bg-blue-600 text-white rounded-lg"
+            >
+              Close
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
 }
+
+/* ---------------- REUSABLE COMPONENTS ---------------- */
+
+const Modal = ({ title, children }) => (
+  <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-xl w-full max-w-md">
+      <div className="p-4 border-b">
+        <h2 className="font-bold">{title}</h2>
+      </div>
+      <div className="p-4">{children}</div>
+    </div>
+  </div>
+);
+
+const StatCard = ({ label, value }) => (
+  <div className="bg-white p-4 rounded-xl border shadow-sm">
+    <p className="text-sm text-gray-600">{label}</p>
+    <p className="text-2xl font-bold text-black">{value}</p>
+  </div>
+);
+
+const IconBtn = ({ icon, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="p-2 rounded hover:bg-gray-100 text-gray-600"
+  >
+    {icon}
+  </button>
+);
+
+const InputField = ({ label, ...props }) => (
+  <div>
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <input
+      {...props}
+      className="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+    />
+  </div>
+);
+
+const SelectField = ({ label, value, onChange, options }) => (
+  <div>
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <select
+      value={value}
+      onChange={onChange}
+      className="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+    >
+      <option value="">Select</option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  </div>
+);

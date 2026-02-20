@@ -1,68 +1,167 @@
-import React from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import {  Eye } from 'lucide-react';
+import React, { useState } from "react";
+import { useServiceAdvisor } from "../context/Serviceadvisorcontext";
+import { Eye, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 
 export default function JobProgressTracking() {
-  const { jobCards } = useServiceAdvisor();
-  const activeJobs = jobCards.filter(jc => jc.status === 'In-Progress' || jc.status === 'Quality Check');
+  const { jobCards, deleteJobCard } = useServiceAdvisor();
+  const [viewJob, setViewJob] = useState(null);
+
+  const activeJobs = jobCards.filter(
+    (jc) => jc.status === "In-Progress" || jc.status === "Quality Check"
+  );
+
+  const handleDelete = (id) => {
+    if (window.confirm(`Delete Job Card ${id}?`)) {
+      deleteJobCard(id);
+      toast.success("Job Card deleted");
+    }
+  };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="font-bold text-black mb-2">Job Progress Tracking</h1>
-        <p className="text-gray-600 text-sm">Monitor real-time job status and updates</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+    
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-black">
+          Job Progress Tracking
+        </h1>
+        <p className="text-sm text-gray-600">
+          Monitor real-time job status and updates
+        </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">Active Jobs</span>
-          <div className="text-3xl font-bold text-black mt-2">{activeJobs.length}</div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">In Progress</span>
-          <div className="text-3xl font-bold text-black mt-2">{jobCards.filter(j => j.status === 'In-Progress').length}</div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">Quality Check</span>
-          <div className="text-3xl font-bold text-black mt-2">{jobCards.filter(j => j.status === 'Quality Check').length}</div>
-        </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <Stat label="Active Jobs" value={activeJobs.length} />
+        <Stat
+          label="In Progress"
+          value={jobCards.filter((j) => j.status === "In-Progress").length}
+        />
+        <Stat
+          label="Quality Check"
+          value={jobCards.filter((j) => j.status === "Quality Check").length}
+        />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+     
+      <div className="bg-white rounded-xl border overflow-x-auto">
+        <table className="min-w-[900px] w-full text-sm">
+          <thead className="bg-gray-50 text-gray-600">
             <tr>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Job Card</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Customer</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Technician</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Status</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Progress</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left">Job Card</th>
+              <th className="px-4 py-3 text-left">Customer</th>
+              <th className="px-4 py-3 text-left">Technician</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Progress</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+
+          <tbody>
             {activeJobs.map((jc) => (
-              <tr key={jc.id} className="hover:bg-gray-50">
-                <td className="py-4 px-6"><span className="text-sm font-mono text-black">{jc.id}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{jc.customerName}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{jc.technician}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{jc.status}</span></td>
-                <td className="py-4 px-6">
+              <tr key={jc.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-mono text-blue-600">
+                  {jc.id}
+                </td>
+                <td className="px-4 py-3">{jc.customerName}</td>
+                <td className="px-4 py-3">{jc.technician || "-"}</td>
+                <td className="px-4 py-3">{jc.status}</td>
+                <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500" style={{ width: `${jc.progress}%` }} />
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                      <div
+                        className="h-full bg-green-500 rounded-full"
+                        style={{ width: `${jc.progress}%` }}
+                      />
                     </div>
-                    <span className="text-xs font-semibold text-black">{jc.progress}%</span>
+                    <span className="text-xs font-semibold">
+                      {jc.progress}%
+                    </span>
                   </div>
                 </td>
-                <td className="py-4 px-6">
-                  <button className="p-1.5 hover:bg-gray-100 rounded"><Eye className="w-4 h-4 text-gray-600" /></button>
+                <td className="px-4 py-3">
+                  <div className="flex justify-center gap-2">
+                    <IconBtn
+                      icon={<Eye className="w-4 h-4" />}
+                      onClick={() => setViewJob(jc)}
+                    />
+                    <IconBtn
+                      icon={<Trash2 className="w-4 h-4 text-red-500" />}
+                      onClick={() => handleDelete(jc.id)}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
+
+            {activeJobs.length === 0 && (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="py-8 text-center text-gray-500"
+                >
+                  No active jobs found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* VIEW MODAL */}
+      {viewJob && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
+            <button
+              onClick={() => setViewJob(null)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+            >
+              <X />
+            </button>
+
+            <h2 className="font-bold text-lg mb-4">Job Details</h2>
+
+            <Detail label="Job ID" value={viewJob.id} />
+            <Detail label="Customer" value={viewJob.customerName} />
+            <Detail label="Vehicle" value={viewJob.vehicle} />
+            <Detail label="Technician" value={viewJob.technician || "-"} />
+            <Detail label="Status" value={viewJob.status} />
+            <Detail label="Progress" value={`${viewJob.progress}%`} />
+
+            <button
+              onClick={() => setViewJob(null)}
+              className="mt-6 w-full py-2 bg-blue-600 text-white rounded-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
+
+const Stat = ({ label, value }) => (
+  <div className="bg-white p-4 rounded-xl border">
+    <p className="text-sm text-gray-600">{label}</p>
+    <p className="text-2xl font-bold">{value}</p>
+  </div>
+);
+
+const IconBtn = ({ icon, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="p-2 rounded hover:bg-gray-100"
+  >
+    {icon}
+  </button>
+);
+
+const Detail = ({ label, value }) => (
+  <p className="text-sm mb-2">
+    <b>{label}:</b> {value}
+  </p>
+);

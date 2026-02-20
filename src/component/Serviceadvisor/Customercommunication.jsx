@@ -1,66 +1,114 @@
-import React from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import { MessageSquare, Send, Mail, Phone } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+import { useServiceAdvisor } from "../context/Serviceadvisorcontext";
+import { MessageSquare, Mail, Phone } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CustomerCommunication() {
   const { jobCards } = useServiceAdvisor();
 
   const handleSendMessage = (channel, jobCard) => {
-    toast.success(`Message sent to customer via ${channel} for ${jobCard.id}`);
+    toast.success(`Message sent via ${channel} for ${jobCard.id}`);
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="font-bold text-black mb-2">Customer Communication</h1>
-        <p className="text-gray-600 text-sm">Send updates and notifications to customers</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+   
+      <div className="mb-6">
+        <h1 className="text-lg sm:text-xl font-bold text-black">
+          Customer Communication
+        </h1>
+        <p className="text-sm text-gray-600">
+          Send updates and notifications to customers
+        </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">Messages Sent Today</span>
-          <div className="text-3xl font-bold text-black mt-2">24</div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">WhatsApp</span>
-          <div className="text-3xl font-bold text-black mt-2">18</div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <span className="text-sm text-gray-600">SMS/Email</span>
-          <div className="text-3xl font-bold text-black mt-2">6</div>
-        </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        {[
+          ["Messages Sent Today", 24],
+          ["WhatsApp", 18],
+          ["SMS / Email", 6],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="bg-white rounded-xl p-5 border shadow-sm"
+          >
+            <p className="text-sm text-gray-600">{label}</p>
+            <p className="text-2xl font-bold mt-2">{value}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+      
+      <div className="space-y-4 sm:hidden">
+        {jobCards.slice(0, 5).map((jc) => (
+          <div
+            key={jc.id}
+            className="bg-white border rounded-xl p-4 shadow-sm"
+          >
+            <p className="text-xs text-gray-400 font-mono">{jc.id}</p>
+            <p className="font-semibold text-gray-900">
+              {jc.customerName}
+            </p>
+            <p className="text-sm text-gray-600">{jc.status}</p>
+
+            <div className="flex gap-3 mt-3">
+              <IconBtn
+                icon={<MessageSquare className="w-4 h-4 text-green-600" />}
+                onClick={() => handleSendMessage("WhatsApp", jc)}
+              />
+              <IconBtn
+                icon={<Phone className="w-4 h-4 text-blue-600" />}
+                onClick={() => handleSendMessage("SMS", jc)}
+              />
+              <IconBtn
+                icon={<Mail className="w-4 h-4 text-purple-600" />}
+                onClick={() => handleSendMessage("Email", jc)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+  
+      <div className="hidden sm:block bg-white rounded-xl border shadow-sm overflow-x-auto">
+        <table className="min-w-[800px] w-full">
+          <thead className="bg-gray-50 text-xs uppercase text-gray-600">
             <tr>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Job Card</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Customer</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Status</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Last Contact</th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase">Actions</th>
+              {["Job Card", "Customer", "Status", "Last Contact", "Actions"].map(
+                (h) => (
+                  <th key={h} className="px-4 py-3 text-left">
+                    {h}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y">
             {jobCards.slice(0, 5).map((jc) => (
               <tr key={jc.id} className="hover:bg-gray-50">
-                <td className="py-4 px-6"><span className="text-sm font-mono text-black">{jc.id}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{jc.customerName}</span></td>
-                <td className="py-4 px-6"><span className="text-sm text-gray-700">{jc.status}</span></td>
-                <td className="py-4 px-6"><span className="text-xs text-gray-600">2 hours ago</span></td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => handleSendMessage('WhatsApp', jc)} className="p-1.5 hover:bg-gray-100 rounded" title="WhatsApp">
-                      <MessageSquare className="w-4 h-4 text-green-600" />
-                    </button>
-                    <button onClick={() => handleSendMessage('SMS', jc)} className="p-1.5 hover:bg-gray-100 rounded" title="SMS">
-                      <Phone className="w-4 h-4 text-blue-600" />
-                    </button>
-                    <button onClick={() => handleSendMessage('Email', jc)} className="p-1.5 hover:bg-gray-100 rounded" title="Email">
-                      <Mail className="w-4 h-4 text-purple-600" />
-                    </button>
+                <td className="px-4 py-3 font-mono text-sm">{jc.id}</td>
+                <td className="px-4 py-3 text-sm">{jc.customerName}</td>
+                <td className="px-4 py-3 text-sm">{jc.status}</td>
+                <td className="px-4 py-3 text-xs text-gray-500">
+                  2 hours ago
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-3">
+                    <IconBtn
+                      icon={
+                        <MessageSquare className="w-4 h-4 text-green-600" />
+                      }
+                      onClick={() => handleSendMessage("WhatsApp", jc)}
+                    />
+                    <IconBtn
+                      icon={<Phone className="w-4 h-4 text-blue-600" />}
+                      onClick={() => handleSendMessage("SMS", jc)}
+                    />
+                    <IconBtn
+                      icon={<Mail className="w-4 h-4 text-purple-600" />}
+                      onClick={() => handleSendMessage("Email", jc)}
+                    />
                   </div>
                 </td>
               </tr>
@@ -71,3 +119,14 @@ export default function CustomerCommunication() {
     </div>
   );
 }
+
+
+const IconBtn = ({ icon, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="p-2 rounded-lg hover:bg-gray-100 transition"
+  >
+    {icon}
+  </button>
+);
