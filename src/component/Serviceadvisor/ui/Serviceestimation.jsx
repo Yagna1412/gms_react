@@ -1,69 +1,25 @@
-import React, { useState } from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import { toast } from 'sonner';
-import { FileText, Plus, Eye, Send, AlertCircle, X } from 'lucide-react';
+import React from 'react';
+import { Plus, Eye, Send, AlertCircle, X } from 'lucide-react';
+import { useServiceEstimation } from '../useServiceEstimation';
 
 export default function ServiceEstimation() {
-  const { estimations, addEstimation, updateEstimation, jobCards, customers } = useServiceAdvisor();
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    jobCardId: '',
-    customerId: '',
-    customerName: '',
-    services: [],
-    parts: [],
-    laborCharges: 0,
-    discount: 0
-  });
-  
-  const handleApprove = (id) => {
-    updateEstimation(id, { status: 'Approved' });
-    toast.success('Estimation approved by customer (OTP verified)');
-  };
-
-  const handleSend = (est) => {
-    toast.success(`Estimation sent to ${est.customerName} via WhatsApp & Email`);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.jobCardId || !formData.customerId) {
-      toast.error('Please select job card and customer');
-      return;
-    }
-
-
-    const servicesTotal = formData.services.reduce((sum, s) => sum + (s.price * s.qty), 0);
-    const partsTotal = formData.parts.reduce((sum, p) => sum + (p.price * p.qty), 0);
-    const subtotal = servicesTotal + partsTotal + parseFloat(formData.laborCharges || 0);
-    const discountAmount = (subtotal * parseFloat(formData.discount || 0)) / 100;
-    const afterDiscount = subtotal - discountAmount;
-    const tax = (afterDiscount * 18) / 100;
-    const totalAmount = afterDiscount + tax;
-
-    const estimationData = {
-      ...formData,
-      services: [{ name: 'General Service', price: 3000, qty: 1 }],
-      parts: [{ name: 'Engine Oil', price: 500, qty: 2, stock: 20 }],
-      laborCharges: parseFloat(formData.laborCharges) || 1000,
-      discount: parseFloat(formData.discount) || 0,
-      discountApproved: parseFloat(formData.discount) <= 15,
-      tax: 18,
-      totalAmount: totalAmount
-    };
-
-    addEstimation(estimationData);
-    
-    if (parseFloat(formData.discount) > 15) {
-      toast.warning('Estimation created! Discount > 15% requires Admin approval.');
-    } else {
-      toast.success('Estimation created successfully! Valid for 7 days.');
-    }
-    
-    setShowModal(false);
-    setFormData({ jobCardId: '', customerId: '', customerName: '', services: [], parts: [], laborCharges: 0, discount: 0 });
-  };
+  const {
+    estimations,
+    jobCards,
+    customers,
+    showModal,
+    formData,
+    pendingCount,
+    approvedCount,
+    totalValueText,
+    openModal,
+    closeModal,
+    updateFormField,
+    handleCustomerChange,
+    handleApprove,
+    handleSend,
+    handleSubmit
+  } = useServiceEstimation();
 
   return (
     <div className="p-8">
@@ -72,7 +28,10 @@ export default function ServiceEstimation() {
           <h1 className="font-bold text-black mb-2">Service Estimation</h1>
           <p className="text-gray-600 text-sm">Create and manage service estimates</p>
         </div>
-        <button className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#2563EB]-900 transition-colors font-semibold" onClick={() => setShowModal(true)}>
+        <button
+          className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#2563EB]-900 transition-colors font-semibold"
+          onClick={openModal}
+        >
           <Plus className="w-5 h-5" />
           New Estimation
         </button>
@@ -81,15 +40,15 @@ export default function ServiceEstimation() {
       <div className="grid grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
           <span className="text-sm text-gray-600">Pending</span>
-          <div className="text-3xl font-bold text-black mt-2">{estimations.filter(e => e.status === 'Pending').length}</div>
+          <div className="text-3xl font-bold text-black mt-2">{pendingCount}</div>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
           <span className="text-sm text-gray-600">Approved</span>
-          <div className="text-3xl font-bold text-black mt-2">{estimations.filter(e => e.status === 'Approved').length}</div>
+          <div className="text-3xl font-bold text-black mt-2">{approvedCount}</div>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
           <span className="text-sm text-gray-600">Total Value</span>
-          <div className="text-3xl font-bold text-black mt-2">₹{(estimations.reduce((sum, e) => sum + e.totalAmount, 0) / 1000).toFixed(0)}K</div>
+          <div className="text-3xl font-bold text-black mt-2">₹{totalValueText}</div>
         </div>
       </div>
 
@@ -145,13 +104,12 @@ export default function ServiceEstimation() {
         </table>
       </div>
 
-     
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-black">Create New Estimation</h2>
-              <button className="p-1.5 hover:bg-gray-100 rounded" onClick={() => setShowModal(false)}>
+              <button className="p-1.5 hover:bg-gray-100 rounded" onClick={closeModal}>
                 <X className="w-4 h-4 text-gray-600" />
               </button>
             </div>
@@ -161,7 +119,7 @@ export default function ServiceEstimation() {
                 <select
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   value={formData.jobCardId}
-                  onChange={(e) => setFormData({ ...formData, jobCardId: e.target.value })}
+                  onChange={(e) => updateFormField('jobCardId', e.target.value)}
                 >
                   <option value="">Select Job Card</option>
                   {jobCards.map((jobCard) => (
@@ -174,10 +132,7 @@ export default function ServiceEstimation() {
                 <select
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   value={formData.customerId}
-                  onChange={(e) => {
-                    const customer = customers.find(c => c.id === e.target.value);
-                    setFormData({ ...formData, customerId: e.target.value, customerName: customer ? customer.name : '' });
-                  }}
+                  onChange={(e) => handleCustomerChange(e.target.value)}
                 >
                   <option value="">Select Customer</option>
                   {customers.map((customer) => (
@@ -191,7 +146,7 @@ export default function ServiceEstimation() {
                   type="number"
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   value={formData.laborCharges}
-                  onChange={(e) => setFormData({ ...formData, laborCharges: e.target.value })}
+                  onChange={(e) => updateFormField('laborCharges', e.target.value)}
                 />
               </div>
               <div className="mb-4">
@@ -200,7 +155,7 @@ export default function ServiceEstimation() {
                   type="number"
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   value={formData.discount}
-                  onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
+                  onChange={(e) => updateFormField('discount', e.target.value)}
                 />
               </div>
               <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#2563EB]-900 transition-colors font-semibold">

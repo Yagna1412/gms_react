@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import { toast } from 'sonner';
+import React from 'react';
 import { 
   Users, 
   Plus, 
@@ -14,128 +12,39 @@ import {
   Mail,
   MapPin,
   X,
-  Check,
-  History,
-  Settings
+  History
 } from 'lucide-react';
+import { useCustomerManagement } from '../useCustomerManagement';
 
 export default function CustomerManagement() {
-  const { customers, addCustomer, updateCustomer, deleteCustomer, addVehicleToCustomer, currentBranch } = useServiceAdvisor();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [showModal, setShowModal] = useState(false);
-  const [viewingCustomer, setViewingCustomer] = useState(null);
-  const [showVehicleModal, setShowVehicleModal] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  
-  // Logic for Edit Functionality
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    address: '',
-    type: 'Regular'
-  });
-
-  const [vehicleData, setVehicleData] = useState({
-    make: '',
-    model: '',
-    year: '',
-    regNo: '',
-    vin: ''
-  });
-
-  const filteredCustomers = customers.filter(cust => {
-    const matchesSearch = cust.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cust.phone.includes(searchTerm) ||
-                         cust.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || cust.type === typeFilter;
-    const matchesBranch = cust.branch === currentBranch;
-    return matchesSearch && matchesType && matchesBranch;
-  });
-
-  // Handle Edit Click
-  const handleEdit = (customer) => {
-    setIsEditing(true);
-    setEditingId(customer.id);
-    setFormData({
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      address: customer.address,
-      type: customer.type
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = (id, name) => {
-    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
-      deleteCustomer(id);
-      toast.success('Customer removed successfully');
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.phone || !formData.email) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-
-    if (isEditing) {
-      // Logic for Update
-      updateCustomer(editingId, formData);
-      toast.success(`Customer "${formData.name}" updated successfully!`);
-    } else {
-      // Logic for New Registration
-      const duplicatePhone = customers.find(cust => cust.phone === formData.phone);
-      const duplicateEmail = customers.find(cust => cust.email === formData.email);
-      
-      if (duplicatePhone) {
-        toast.error('Customer with this phone number already exists');
-        return;
-      }
-      
-      if (duplicateEmail) {
-        toast.error('Customer with this email already exists');
-        return;
-      }
-
-      addCustomer({ ...formData, vehicles: [] });
-      toast.success(`Customer "${formData.name}" registered successfully! Welcome SMS sent.`);
-    }
-
-    setShowModal(false);
-    setIsEditing(false);
-    setEditingId(null);
-    setFormData({ name: '', phone: '', email: '', address: '', type: 'Regular' });
-  };
-
-  const handleAddVehicle = (e) => {
-    e.preventDefault();
-    if (!vehicleData.make || !vehicleData.model || !vehicleData.regNo) {
-      toast.error('Please fill all required vehicle fields');
-      return;
-    }
-    addVehicleToCustomer(selectedCustomer.id, vehicleData);
-    toast.success('Vehicle added successfully');
-    setShowVehicleModal(false);
-    setVehicleData({ make: '', model: '', year: '', regNo: '', vin: '' });
-    setSelectedCustomer(null);
-  };
-
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'VIP': return 'bg-purple-50 text-purple-700';
-      case 'Premium': return 'bg-blue-50 text-blue-700';
-      case 'Regular': return 'bg-gray-50 text-gray-700';
-      default: return 'bg-gray-50 text-gray-700';
-    }
-  };
+  const {
+    currentBranch,
+    searchTerm,
+    typeFilter,
+    showModal,
+    viewingCustomer,
+    showVehicleModal,
+    selectedCustomer,
+    isEditing,
+    formData,
+    vehicleData,
+    filteredCustomers,
+    getTypeColor,
+    setSearchTerm,
+    setTypeFilter,
+    openCreateModal,
+    closeCustomerModal,
+    openViewCustomer,
+    closeViewCustomer,
+    openVehicleModal,
+    closeVehicleModal,
+    updateFormField,
+    updateVehicleField,
+    handleEdit,
+    handleDelete,
+    handleSubmit,
+    handleAddVehicle
+  } = useCustomerManagement();
 
   return (
     <div className="p-8">
@@ -145,11 +54,7 @@ export default function CustomerManagement() {
           <p className="text-gray-600 text-sm">Manage customers for {currentBranch}</p>
         </div>
         <button 
-          onClick={() => {
-            setIsEditing(false);
-            setFormData({ name: '', phone: '', email: '', address: '', type: 'Regular' });
-            setShowModal(true);
-          }}
+          onClick={openCreateModal}
           className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
         >
           <Plus className="w-5 h-5" />
@@ -263,10 +168,7 @@ export default function CustomerManagement() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-black">{customer.vehicles.length}</span>
                       <button 
-                        onClick={() => {
-                          setSelectedCustomer(customer);
-                          setShowVehicleModal(true);
-                        }}
+                        onClick={() => openVehicleModal(customer)}
                         className="text-xs text-blue-600 hover:text-blue-700"
                       >
                         + Add
@@ -276,7 +178,7 @@ export default function CustomerManagement() {
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <button 
-                        onClick={() => setViewingCustomer(customer)}
+                        onClick={() => openViewCustomer(customer)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
                         title="View Details"
                       >
@@ -319,7 +221,7 @@ export default function CustomerManagement() {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => updateFormField('name', e.target.value)}
                       placeholder="e.g., Rahul Sharma"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -329,7 +231,7 @@ export default function CustomerManagement() {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => updateFormField('phone', e.target.value)}
                       placeholder="e.g., +91 98765 43210"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -339,7 +241,7 @@ export default function CustomerManagement() {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) => updateFormField('email', e.target.value)}
                       placeholder="e.g., rahul@example.com"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -348,7 +250,7 @@ export default function CustomerManagement() {
                     <label className="block text-xs font-semibold text-gray-700 mb-2">CUSTOMER TYPE</label>
                     <select
                       value={formData.type}
-                      onChange={(e) => setFormData({...formData, type: e.target.value})}
+                      onChange={(e) => updateFormField('type', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     >
                       <option value="Regular">Regular</option>
@@ -361,7 +263,7 @@ export default function CustomerManagement() {
                   <label className="block text-xs font-semibold text-gray-700 mb-2">ADDRESS</label>
                   <textarea
                     value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    onChange={(e) => updateFormField('address', e.target.value)}
                     placeholder="Complete address"
                     rows="3"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
@@ -371,10 +273,7 @@ export default function CustomerManagement() {
               <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
                 <button 
                   type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setIsEditing(false);
-                  }}
+                  onClick={closeCustomerModal}
                   className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   Cancel
@@ -399,7 +298,7 @@ export default function CustomerManagement() {
                 <p className="text-sm text-gray-600 mt-1">{viewingCustomer.id}</p>
               </div>
               <button 
-                onClick={() => setViewingCustomer(null)}
+                onClick={closeViewCustomer}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-600" />
@@ -512,7 +411,7 @@ export default function CustomerManagement() {
 
             <div className="sticky bottom-0 bg-gray-50 p-6 border-t border-gray-200 flex items-center justify-end">
               <button
-                onClick={() => setViewingCustomer(null)}
+                onClick={closeViewCustomer}
                 className="px-5 py-2.5 bg-[#2563EB] text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Close
@@ -536,7 +435,7 @@ export default function CustomerManagement() {
                     <input
                       type="text"
                       value={vehicleData.make}
-                      onChange={(e) => setVehicleData({...vehicleData, make: e.target.value})}
+                      onChange={(e) => updateVehicleField('make', e.target.value)}
                       placeholder="e.g., Maruti Suzuki"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -546,7 +445,7 @@ export default function CustomerManagement() {
                     <input
                       type="text"
                       value={vehicleData.model}
-                      onChange={(e) => setVehicleData({...vehicleData, model: e.target.value})}
+                      onChange={(e) => updateVehicleField('model', e.target.value)}
                       placeholder="e.g., Swift"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -556,7 +455,7 @@ export default function CustomerManagement() {
                     <input
                       type="text"
                       value={vehicleData.year}
-                      onChange={(e) => setVehicleData({...vehicleData, year: e.target.value})}
+                      onChange={(e) => updateVehicleField('year', e.target.value)}
                       placeholder="e.g., 2020"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -566,7 +465,7 @@ export default function CustomerManagement() {
                     <input
                       type="text"
                       value={vehicleData.regNo}
-                      onChange={(e) => setVehicleData({...vehicleData, regNo: e.target.value.toUpperCase()})}
+                      onChange={(e) => updateVehicleField('regNo', e.target.value.toUpperCase())}
                       placeholder="e.g., MH02AB1234"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -576,7 +475,7 @@ export default function CustomerManagement() {
                     <input
                       type="text"
                       value={vehicleData.vin}
-                      onChange={(e) => setVehicleData({...vehicleData, vin: e.target.value.toUpperCase()})}
+                      onChange={(e) => updateVehicleField('vin', e.target.value.toUpperCase())}
                       placeholder="e.g., MA3EW51S000123456"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
@@ -586,10 +485,7 @@ export default function CustomerManagement() {
               <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
                 <button 
                   type="button"
-                  onClick={() => {
-                    setShowVehicleModal(false);
-                    setSelectedCustomer(null);
-                  }}
+                  onClick={closeVehicleModal}
                   className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   Cancel

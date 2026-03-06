@@ -1,58 +1,35 @@
-import React, { useState } from "react";
+import React from "react";
 import { ServiceAdvisorProvider } from "../component/context/Serviceadvisorcontext";
 
 import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  ClipboardList,
-  FileText,
-  Activity,
-  MessageSquare,
-  CreditCard,
-  AlertCircle,
   Power,
   Search,
   Bell
 } from "lucide-react";
+import { useServiceAdvisorDashboard } from "./Serviceadvisor/useServiceAdvisorDashboard";
 
-import ServiceAdvisorHome from "../component/Serviceadvisor/Serviceadvisorhome";
-import Customermanagement from "../component/Serviceadvisor/Customermanagement";
-import AppointmentBooking from "../component/Serviceadvisor/Appointmentbooking";
-import JobCardCreation from "../component/Serviceadvisor/Jobcardcreation";
-import ServiceEstimation from "../component/Serviceadvisor/Serviceestimation";
-import JobProgressTracking from "../component/Serviceadvisor/Jobprogresstracking";
-import CustomerCommunication from "../component/Serviceadvisor/Customercommunication";
-import BillingDelivery from "../component/Serviceadvisor/Billinganddeliverey";
-import ComplaintManagement from "../component/Serviceadvisor/Complaintmanagement";
+import ServiceAdvisorHome from "../component/Serviceadvisor/ui/Serviceadvisorhome";
+import Customermanagement from "../component/Serviceadvisor/ui/Customermanagement";
+import AppointmentBooking from "../component/Serviceadvisor/ui/Appointmentbooking";
+import JobCardCreation from "../component/Serviceadvisor/ui/Jobcardcreation";
+import ServiceEstimation from "../component/Serviceadvisor/ui/Serviceestimation";
+import JobProgressTracking from "../component/Serviceadvisor/ui/Jobprogresstracking";
+import CustomerCommunication from "../component/Serviceadvisor/ui/Customercommunication";
+import BillingDelivery from "../component/Serviceadvisor/ui/Billinganddeliverey";
+import ComplaintManagement from "../component/Serviceadvisor/ui/Complaintmanagement";
 function DashboardContent({ onLogout }) {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [notifications] = useState(8);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  const handleLogout = () => {
-    setShowLogoutModal(true);
-  };
-
-  const confirmLogout = () => {
-    // toast.success('Logging out...');
-    setTimeout(() => {
-      onLogout();
-    }, 500);
-  };
-
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'customers', label: 'Customers', icon: Users },
-    { id: 'appointments', label: 'Appointments', icon: Calendar },
-    { id: 'jobcards', label: 'Job Cards', icon: ClipboardList },
-    { id: 'estimations', label: 'Estimations', icon: FileText },
-    { id: 'tracking', label: 'Job Tracking', icon: Activity },
-    { id: 'communication', label: 'Communication', icon: MessageSquare },
-    { id: 'delivery', label: 'Billing & Delivery', icon: CreditCard },
-    { id: 'complaints', label: 'Complaints', icon: AlertCircle }
-  ];
+  const {
+    activeTab,
+    notifications,
+    searchQuery,
+    showLogoutModal,
+    navItems,
+    setActiveTab,
+    setSearchQuery,
+    handleLogout,
+    closeLogoutModal,
+    confirmLogout
+  } = useServiceAdvisorDashboard(onLogout);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -198,7 +175,7 @@ function DashboardContent({ onLogout }) {
             </div>
             <div className="flex items-center gap-3 p-6 border-t border-gray-200 bg-gray-50">
               <button
-                onClick={() => setShowLogoutModal(false)}
+                onClick={closeLogoutModal}
                 className="flex-1 px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 Cancel

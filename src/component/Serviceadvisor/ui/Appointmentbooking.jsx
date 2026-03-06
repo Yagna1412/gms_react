@@ -1,65 +1,24 @@
-import React, { useState } from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import { toast } from 'sonner';
-import { Calendar, Plus, Clock, User, Car, X, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Plus, Clock, CheckCircle } from 'lucide-react';
+import { useAppointmentBooking } from '../useAppointmentBooking';
 
 export default function AppointmentBooking() {
-  const { appointments, customers, addAppointment, updateAppointment } = useServiceAdvisor();
-  const [showModal, setShowModal] = useState(false);
-  const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
-  const [formData, setFormData] = useState({
-    customerId: '',
-    customerName: '',
-    vehicle: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '',
-    serviceType: '',
-    technician: '',
-    duration: '2 hours'
-  });
-
-  const filteredAppointments = appointments.filter(apt => apt.date === viewDate);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.customerId || !formData.date || !formData.time || !formData.serviceType) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-
-    const newAppointment = addAppointment(formData);
-    toast.success(`Appointment booked for ${formData.customerName}. Reminder will be sent 24h before.`);
-    setShowModal(false);
-    setFormData({ customerId: '', customerName: '', vehicle: '', date: new Date().toISOString().split('T')[0], time: '', serviceType: '', technician: '', duration: '2 hours' });
-  };
-
-  const handleCancel = (id) => {
-    if (window.confirm('Cancel this appointment?')) {
-      updateAppointment(id, { status: 'Cancelled' });
-      toast.success('Appointment cancelled');
-    }
-  };
-
-  const handleReschedule = (apt) => {
-    setFormData({
-      customerId: apt.customerId,
-      customerName: apt.customerName,
-      vehicle: apt.vehicle,
-      date: apt.date,
-      time: apt.time,
-      serviceType: apt.serviceType,
-      technician: apt.technician,
-      duration: apt.duration
-    });
-    setShowModal(true);
-  };
-
-  const timeSlots = [
-    '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-    '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM',
-    '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM'
-  ];
+  const {
+    customers,
+    filteredAppointments,
+    formData,
+    showModal,
+    viewDate,
+    minDate,
+    timeSlots,
+    openBookingModal,
+    closeBookingModal,
+    setViewDate,
+    updateFormField,
+    handleCustomerChange,
+    handleSubmit,
+    handleCancel,
+    handleReschedule
+  } = useAppointmentBooking();
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -78,7 +37,7 @@ export default function AppointmentBooking() {
           <h1 className="font-bold text-black mb-2">Appointment Booking</h1>
           <p className="text-gray-600 text-sm">Manage customer appointments and schedules</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#2563EB]-900 transition-colors font-semibold">
+        <button onClick={openBookingModal} className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-[#2563EB]-900 transition-colors font-semibold">
           <Plus className="w-5 h-5" />
           Book Appointment
         </button>
@@ -202,15 +161,7 @@ export default function AppointmentBooking() {
                     <label className="block text-xs font-semibold text-gray-700 mb-2">SELECT CUSTOMER *</label>
                     <select
                       value={formData.customerId}
-                      onChange={(e) => {
-                        const customer = customers.find(c => c.id === e.target.value);
-                        setFormData({
-                          ...formData,
-                          customerId: e.target.value,
-                          customerName: customer?.name || '',
-                          vehicle: customer?.vehicles[0] ? `${customer.vehicles[0].model} - ${customer.vehicles[0].regNo}` : ''
-                        });
-                      }}
+                      onChange={(e) => handleCustomerChange(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     >
                       <option value="">Select customer</option>
@@ -223,7 +174,7 @@ export default function AppointmentBooking() {
                     <label className="block text-xs font-semibold text-gray-700 mb-2">SERVICE TYPE *</label>
                     <select
                       value={formData.serviceType}
-                      onChange={(e) => setFormData({...formData, serviceType: e.target.value})}
+                      onChange={(e) => updateFormField('serviceType', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     >
                       <option value="">Select service</option>
@@ -240,8 +191,8 @@ export default function AppointmentBooking() {
                     <input
                       type="date"
                       value={formData.date}
-                      onChange={(e) => setFormData({...formData, date: e.target.value})}
-                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => updateFormField('date', e.target.value)}
+                      min={minDate}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     />
                   </div>
@@ -249,7 +200,7 @@ export default function AppointmentBooking() {
                     <label className="block text-xs font-semibold text-gray-700 mb-2">TIME SLOT *</label>
                     <select
                       value={formData.time}
-                      onChange={(e) => setFormData({...formData, time: e.target.value})}
+                      onChange={(e) => updateFormField('time', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     >
                       <option value="">Select time</option>
@@ -262,7 +213,7 @@ export default function AppointmentBooking() {
                     <label className="block text-xs font-semibold text-gray-700 mb-2">TECHNICIAN</label>
                     <select
                       value={formData.technician}
-                      onChange={(e) => setFormData({...formData, technician: e.target.value})}
+                      onChange={(e) => updateFormField('technician', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     >
                       <option value="">Auto-assign</option>
@@ -275,7 +226,7 @@ export default function AppointmentBooking() {
                     <label className="block text-xs font-semibold text-gray-700 mb-2">DURATION</label>
                     <select
                       value={formData.duration}
-                      onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                      onChange={(e) => updateFormField('duration', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C5FF4D]"
                     >
                       <option value="1 hour">1 hour</option>
@@ -288,7 +239,7 @@ export default function AppointmentBooking() {
                 </div>
               </div>
               <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={closeBookingModal} className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-colors">
                   Cancel
                 </button>
                 <button type="submit" className="px-5 py-2.5 bg-[#2563EB] text-white rounded-lg font-medium hover:bg-[#2563EB]-900 transition-colors">

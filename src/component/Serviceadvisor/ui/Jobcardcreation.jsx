@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import { toast } from 'sonner';
+import React from 'react';
 import { 
   Plus, 
   Search, 
   Eye, 
-  Upload, 
   Edit, 
   Trash2, 
   X, 
@@ -14,92 +11,30 @@ import {
   Clock, 
   AlertCircle 
 } from 'lucide-react';
+import { useJobCardCreation } from '../useJobCardCreation';
 
 export default function JobCardCreation() {
-  const { jobCards, customers, addJobCard, updateJobCard, deleteJobCard } = useServiceAdvisor();
-  const [showModal, setShowModal] = useState(false);
-  const [viewingJobCard, setViewingJobCard] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-
-  const [formData, setFormData] = useState({
-    customerId: '',
-    customerName: '',
-    vehicle: '',
-    complaints: '',
-    odometer: '',
-    priority: 'Normal',
-    technician: '',
-    serviceAdvisor: 'Current User'
-  });
-
-  const filteredJobCards = jobCards.filter(jc => 
-    jc.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    jc.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    jc.vehicle.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleEdit = (jc) => {
-    setIsEditing(true);
-    setEditingId(jc.id);
-    setFormData({
-      customerId: jc.customerId,
-      customerName: jc.customerName,
-      vehicle: jc.vehicle,
-      complaints: Array.isArray(jc.complaints) ? jc.complaints.join(', ') : jc.complaints,
-      odometer: jc.odometer || '',
-      priority: jc.priority,
-      technician: jc.technician || '',
-      serviceAdvisor: jc.serviceAdvisor || 'Current User'
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm(`Are you sure you want to delete Job Card ${id}?`)) {
-      deleteJobCard(id);
-      toast.success(`Job Card ${id} deleted successfully`);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.customerId || !formData.complaints) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-
-    const processedData = {
-      ...formData,
-      status: isEditing ? jobCards.find(j => j.id === editingId)?.status : 'In-Progress',
-      progress: isEditing ? jobCards.find(j => j.id === editingId)?.progress : 0,
-      complaints: formData.complaints.split(',').map(c => c.trim())
-    };
-
-    if (isEditing) {
-      updateJobCard(editingId, processedData);
-      toast.success(`Job Card ${editingId} updated successfully!`);
-    } else {
-      addJobCard(processedData);
-      toast.success(`New Job Card created successfully!`);
-    }
-
-    setShowModal(false);
-    setIsEditing(false);
-    setEditingId(null);
-    setFormData({ customerId: '', customerName: '', vehicle: '', complaints: '', odometer: '', priority: 'Normal', technician: '', serviceAdvisor: 'Current User' });
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'VIP': return 'bg-purple-50 text-purple-700';
-      case 'Urgent': return 'bg-red-50 text-red-700';
-      case 'High': return 'bg-orange-50 text-orange-700';
-      default: return 'bg-blue-50 text-blue-700';
-    }
-  };
+  const {
+    jobCards,
+    customers,
+    showModal,
+    viewingJobCard,
+    searchTerm,
+    isEditing,
+    formData,
+    filteredJobCards,
+    getPriorityColor,
+    setSearchTerm,
+    openCreateModal,
+    closeModal,
+    openJobDetails,
+    closeJobDetails,
+    updateFormField,
+    handleCustomerChange,
+    handleEdit,
+    handleDelete,
+    handleSubmit
+  } = useJobCardCreation();
 
   return (
     <div className="p-8">
@@ -110,11 +45,7 @@ export default function JobCardCreation() {
           <p className="text-gray-600 text-sm">Create and manage active service records</p>
         </div>
         <button 
-          onClick={() => {
-            setIsEditing(false);
-            setFormData({ customerId: '', customerName: '', vehicle: '', complaints: '', odometer: '', priority: 'Normal', technician: '', serviceAdvisor: 'Current User' });
-            setShowModal(true);
-          }} 
+          onClick={openCreateModal} 
           className="flex items-center gap-2 px-5 py-3 bg-[#2563EB] text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm"
         >
           <Plus className="w-5 h-5" />
@@ -183,7 +114,7 @@ export default function JobCardCreation() {
                 <td className="py-4 px-6"><span className="text-sm text-gray-700">{jc.status}</span></td>
                 <td className="py-4 px-6 text-center">
                   <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => setViewingJobCard(jc)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">
+                    <button onClick={() => openJobDetails(jc)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">
                       <Eye className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleEdit(jc)} className="p-1.5 hover:bg-gray-100 rounded text-gray-600">
@@ -210,7 +141,7 @@ export default function JobCardCreation() {
           <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
               <h2 className="font-bold text-xl text-black">{isEditing ? 'Update Job Card' : 'Create Job Card'}</h2>
-              <button onClick={() => setShowModal(false)}><X className="w-6 h-6 text-gray-400" /></button>
+              <button onClick={closeModal}><X className="w-6 h-6 text-gray-400" /></button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="p-6 space-y-5">
@@ -220,15 +151,7 @@ export default function JobCardCreation() {
                     <select
                       required
                       value={formData.customerId}
-                      onChange={(e) => {
-                        const customer = customers.find(c => c.id === e.target.value);
-                        setFormData({
-                          ...formData,
-                          customerId: e.target.value,
-                          customerName: customer?.name || '',
-                          vehicle: customer?.vehicles?.[0] ? `${customer.vehicles[0].model} - ${customer.vehicles[0].regNo}` : ''
-                        });
-                      }}
+                      onChange={(e) => handleCustomerChange(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C5FF4D] outline-none"
                     >
                       <option value="">Select customer</option>
@@ -240,7 +163,7 @@ export default function JobCardCreation() {
                     <input
                       type="number"
                       value={formData.odometer}
-                      onChange={(e) => setFormData({...formData, odometer: e.target.value})}
+                      onChange={(e) => updateFormField('odometer', e.target.value)}
                       placeholder="e.g., 45000"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C5FF4D] outline-none"
                     />
@@ -249,7 +172,7 @@ export default function JobCardCreation() {
                     <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Priority</label>
                     <select
                       value={formData.priority}
-                      onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                      onChange={(e) => updateFormField('priority', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C5FF4D] outline-none"
                     >
                       <option value="Normal">Normal</option>
@@ -262,7 +185,7 @@ export default function JobCardCreation() {
                     <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Technician</label>
                     <select
                       value={formData.technician}
-                      onChange={(e) => setFormData({...formData, technician: e.target.value})}
+                      onChange={(e) => updateFormField('technician', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C5FF4D] outline-none"
                     >
                       <option value="">Auto-assign</option>
@@ -276,7 +199,7 @@ export default function JobCardCreation() {
                   <textarea
                     required
                     value={formData.complaints}
-                    onChange={(e) => setFormData({...formData, complaints: e.target.value})}
+                    onChange={(e) => updateFormField('complaints', e.target.value)}
                     placeholder="e.g., Engine noise, Brake check"
                     rows="3"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C5FF4D] outline-none"
@@ -284,7 +207,7 @@ export default function JobCardCreation() {
                 </div>
               </div>
               <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50">
-                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100">Cancel</button>
+                <button type="button" onClick={closeModal} className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100">Cancel</button>
                 <button type="submit" className="px-5 py-2.5 bg-[#2563EB] text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm">
                   {isEditing ? 'Save Changes' : 'Create Job Card'}
                 </button>
@@ -374,7 +297,7 @@ export default function JobCardCreation() {
 
             {/* Blue Action Button */}
             <button 
-              onClick={() => setViewingJobCard(null)} 
+              onClick={closeJobDetails} 
               className="w-full py-4 bg-[#2563EB] text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
             >
               Close Details

@@ -1,43 +1,42 @@
 import React from 'react';
-import { useServiceAdvisor } from '../context/Serviceadvisorcontext';
-import { 
-  Calendar, 
-  FileText, 
-  Activity, 
+import {
+  Calendar,
+  FileText,
+  Activity,
   Truck,
   AlertCircle,
   Users,
   ClipboardList,
-  Plus,
   ArrowRight,
   Clock,
   CheckCircle,
   TrendingUp
 } from 'lucide-react';
+import { useServiceAdvisorHome } from '../useServiceAdvisorHome';
 
 export default function ServiceAdvisorHome({ onNavigate }) {
-  const { appointments, estimations, jobCards, complaints, currentBranch } = useServiceAdvisor();
-
-  // Today's stats
-  const today = new Date().toISOString().split('T')[0];
-  const todayAppointments = appointments.filter(apt => apt.date === today);
-  const scheduledToday = todayAppointments.filter(apt => apt.status === 'Scheduled').length;
-  const inProgressToday = todayAppointments.filter(apt => apt.status === 'In-Progress').length;
-  
-  const pendingEstimations = estimations.filter(est => est.status === 'Pending').length;
-  const jobsInProgress = jobCards.filter(jc => jc.status === 'In-Progress').length;
-  const pendingDeliveries = jobCards.filter(jc => jc.status === 'Quality Check' || jc.status === 'Ready for Delivery').length;
-  const activeComplaints = complaints.filter(comp => comp.status !== 'Resolved').length;
+  const {
+    currentBranch,
+    jobCards,
+    todayAppointments,
+    scheduledToday,
+    inProgressToday,
+    pendingEstimations,
+    jobsInProgress,
+    pendingDeliveries,
+    activeComplaints,
+    pendingEstimationItems,
+    activeComplaintItems,
+    totalEstimationValueK
+  } = useServiceAdvisorHome();
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="font-bold text-black mb-2">Service Advisor Dashboard</h1>
         <p className="text-gray-600 text-sm">Welcome back! Here's your overview for today • Branch: {currentBranch}</p>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onNavigate('appointments')}>
           <div className="flex items-center justify-between mb-4">
@@ -98,15 +97,11 @@ export default function ServiceAdvisorHome({ onNavigate }) {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-black mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
-            <button 
-              onClick={() => onNavigate('appointments')}
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all"
-            >
+            <button onClick={() => onNavigate('appointments')} className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-blue-600" />
               </div>
@@ -116,10 +111,7 @@ export default function ServiceAdvisorHome({ onNavigate }) {
               </div>
             </button>
 
-            <button 
-              onClick={() => onNavigate('customers')}
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all"
-            >
+            <button onClick={() => onNavigate('customers')} className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-green-600" />
               </div>
@@ -129,10 +121,7 @@ export default function ServiceAdvisorHome({ onNavigate }) {
               </div>
             </button>
 
-            <button 
-              onClick={() => onNavigate('jobcards')}
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all"
-            >
+            <button onClick={() => onNavigate('jobcards')} className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <ClipboardList className="w-5 h-5 text-purple-600" />
               </div>
@@ -142,10 +131,7 @@ export default function ServiceAdvisorHome({ onNavigate }) {
               </div>
             </button>
 
-            <button 
-              onClick={() => onNavigate('estimations')}
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all"
-            >
+            <button onClick={() => onNavigate('estimations')} className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-[#C5FF4D] hover:bg-gray-50 transition-all">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-yellow-600" />
               </div>
@@ -157,19 +143,15 @@ export default function ServiceAdvisorHome({ onNavigate }) {
           </div>
         </div>
 
-        {/* Today's Timeline */}
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-black">Today's Schedule</h2>
-            <button 
-              onClick={() => onNavigate('appointments')}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
+            <button onClick={() => onNavigate('appointments')} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
               View All
             </button>
           </div>
           <div className="space-y-3">
-            {todayAppointments.slice(0, 3).map((apt, idx) => (
+            {todayAppointments.slice(0, 3).map((apt) => (
               <div key={apt.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Clock className="w-5 h-5 text-blue-600" />
@@ -189,17 +171,13 @@ export default function ServiceAdvisorHome({ onNavigate }) {
               </div>
             ))}
             {todayAppointments.length === 0 && (
-              <div className="text-center py-6 text-gray-500 text-sm">
-                No appointments scheduled for today
-              </div>
+              <div className="text-center py-6 text-gray-500 text-sm">No appointments scheduled for today</div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Pending Tasks & Alerts */}
       <div className="grid grid-cols-2 gap-6">
-        {/* Pending Estimations */}
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-black">Pending Estimations</h2>
@@ -208,29 +186,23 @@ export default function ServiceAdvisorHome({ onNavigate }) {
             </span>
           </div>
           <div className="space-y-3">
-            {estimations.filter(est => est.status === 'Pending').slice(0, 3).map(est => (
+            {pendingEstimationItems.map((est) => (
               <div key={est.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-black">{est.customerName}</div>
                   <div className="text-xs text-gray-600">{est.id} • ₹{est.totalAmount.toLocaleString()}</div>
                 </div>
-                <button 
-                  onClick={() => onNavigate('estimations')}
-                  className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors"
-                >
+                <button onClick={() => onNavigate('estimations')} className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors">
                   Review
                 </button>
               </div>
             ))}
             {pendingEstimations === 0 && (
-              <div className="text-center py-6 text-gray-500 text-sm">
-                No pending estimations
-              </div>
+              <div className="text-center py-6 text-gray-500 text-sm">No pending estimations</div>
             )}
           </div>
         </div>
 
-        {/* Active Complaints */}
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-black">Active Complaints</h2>
@@ -239,7 +211,7 @@ export default function ServiceAdvisorHome({ onNavigate }) {
             </span>
           </div>
           <div className="space-y-3">
-            {complaints.filter(comp => comp.status !== 'Resolved').map(comp => (
+            {activeComplaintItems.map((comp) => (
               <div key={comp.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <AlertCircle className="w-5 h-5 text-red-600" />
@@ -268,7 +240,6 @@ export default function ServiceAdvisorHome({ onNavigate }) {
         </div>
       </div>
 
-      {/* Performance Summary */}
       <div className="grid grid-cols-3 gap-6 mt-6">
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-2">
@@ -283,7 +254,7 @@ export default function ServiceAdvisorHome({ onNavigate }) {
             <span className="text-sm text-gray-600">Estimation Value</span>
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
-          <div className="text-2xl font-bold text-black">₹{(estimations.reduce((sum, est) => sum + est.totalAmount, 0) / 1000).toFixed(0)}K</div>
+          <div className="text-2xl font-bold text-black">₹{totalEstimationValueK}K</div>
           <div className="text-xs text-gray-500 mt-1">Total pending</div>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
