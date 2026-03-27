@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useInventory } from '../../component/context/InventoryContext';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';

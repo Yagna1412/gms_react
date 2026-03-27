@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useInventory } from '../../component/context/InventoryContext';
 import { toast } from 'sonner';
 import {
     Package,

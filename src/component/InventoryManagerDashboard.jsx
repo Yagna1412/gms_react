@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { InventoryProvider } from "../contexts/InventoryContext";
+import { InventoryProvider } from "./context/InventoryContext";
 import { Toaster } from "sonner";
 import {
   LayoutDashboard,
@@ -23,7 +23,7 @@ import VendorManagement from "./inventory/VendorManagement";
 import ValuationReports from "./inventory/ValuationReports";
 import InventoryErrorBoundary from "./inventory/shared/InventoryErrorBoundary";
 
-function DashboardContent1({ onLogout }) {
+function DashboardContent({ onLogout }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -209,10 +209,10 @@ function DashboardContent1({ onLogout }) {
   );
 }
 
-export default function InventoryManagerDashboard1({ onLogout }) {
+export default function InventoryManagerDashboard({ onLogout }) {
   return (
     <InventoryProvider>
-      <DashboardContent1 onLogout={onLogout} />
+      <DashboardContent onLogout={onLogout} />
     </InventoryProvider>
   );
 }

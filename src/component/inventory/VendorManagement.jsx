@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useInventory } from '../../component/context/InventoryContext';
 import { toast } from 'sonner';
 import { Users, Plus, Search, Eye, Edit2, Trash2, X, Star, TrendingUp, Award } from 'lucide-react';
 

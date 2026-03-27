@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useInventory } from '../../component/context/InventoryContext';
 import { toast } from 'sonner';
 import {
     TrendingUp,

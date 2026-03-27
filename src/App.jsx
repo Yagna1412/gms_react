@@ -1,10 +1,11 @@
-import { ServiceAdvisorProvider } from "./component/context/Serviceadvisorcontext";
-import ServiceAdvisorDashboard from "./component/ServiceAdvisorDashboard"
+import InventoryManagerDashboard from "./component/InventoryManagerDashboard"
 
 export default function App() {
+  const handleLogout = () => {
+    console.log("Logout clicked");
+  };
+
   return (
-    <ServiceAdvisorProvider>
-      <ServiceAdvisorDashboard />
-    </ServiceAdvisorProvider>
+    <InventoryManagerDashboard onLogout={handleLogout} />
   );
 }
